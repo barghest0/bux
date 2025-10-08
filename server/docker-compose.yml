@@ -1,0 +1,45 @@
+version: "3.8"
+services:
+  identity:
+    build: ./services/identity
+    container_name: identity-service
+    depends_on: [postgres]
+    restart: always
+    environment: [CONFIG_PATH=/app/config/local.yaml]
+    ports: [8081:8081]
+    networks: [bux]
+    volumes: [./services/identity/config/local.yaml:/app/config/local.yaml]
+    develop:
+      watch:
+        - action: rebuild
+          path: ./services/identity
+          target: /app
+  postgres:
+        image: postgres:16
+        container_name: postgres
+        restart: always
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: barghest
+          POSTGRES_DB: postgres
+        ports: [5432:5432]
+        volumes: [pgdata:/var/lib/postgresql/data]
+        networks: [bux]
+  pgadmin:
+        container_name: pgadmin
+        image: dpage/pgadmin4
+        restart: always
+        environment:
+            PGADMIN_DEFAULT_EMAIL: barghest391@gmail.com
+            PGADMIN_DEFAULT_PASSWORD: barghest
+        networks: [bux]
+        ports: [5050:80]
+        depends_on: [postgres]
+
+networks:
+  bux:
+    driver: bridge
+
+volumes:
+  pgdata:
+  pgadmin-data:
