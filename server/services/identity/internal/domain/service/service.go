@@ -65,13 +65,8 @@ func (s *UserService) Login(username string, password string) (*model.User, stri
 	return user, token, nil
 }
 
-func (s *UserService) Me(token string) (*model.User, error) {
+func (s *UserService) Me(userID int) (*model.User, error) {
 	const tag = "service.Me"
-
-	userID, err := auth.ParseToken(token)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %s", tag, "Неверный токен")
-	}
 
 	user, err := s.repo.GetByID(userID)
 	if err != nil || user == nil {

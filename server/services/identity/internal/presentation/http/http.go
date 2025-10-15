@@ -4,8 +4,8 @@ import (
 	"identity/internal/domain/model"
 	"identity/internal/domain/service"
 	"identity/internal/infra/auth"
+	"identity/internal/presentation/http/middleware"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,6 +26,7 @@ func New(r *gin.Engine, s *service.UserService) {
 	}
 
 	users := r.Group("/users")
+	users.Use(middleware.AuthMiddleware())
 	{
 		users.GET("/", h.Users)
 		users.GET("/me", h.Me)
@@ -92,21 +93,13 @@ func (h *UserHTTP) Login(ctx *gin.Context) {
 }
 
 func (h *UserHTTP) Me(ctx *gin.Context) {
-	authHeader := ctx.GetHeader("Authorization")
-	if authHeader == "" {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Токен отсутствует"})
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Пользователь не найден в контексте"})
 		return
 	}
 
-	tokenParts := strings.Split(authHeader, " ")
-	if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Неверный формат токена"})
-		return
-	}
-
-	token := tokenParts[1]
-
-	user, err := h.service.Me(token)
+	user, err := h.service.Me(userID.(int))
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
