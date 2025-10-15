@@ -3,6 +3,7 @@ package http
 import (
 	"identity/internal/domain/model"
 	"identity/internal/domain/service"
+	"identity/internal/infra/auth"
 	"net/http"
 	"strings"
 
@@ -55,7 +56,16 @@ func (h *UserHTTP) Register(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, registeredUser)
+	token, err := auth.GenerateToken(registeredUser.ID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{
+		"user":  registeredUser,
+		"token": token,
+	})
 }
 
 func (h *UserHTTP) Login(ctx *gin.Context) {

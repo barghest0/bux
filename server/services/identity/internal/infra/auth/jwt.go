@@ -7,29 +7,16 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type TokenService interface {
-	GenerateToken(userID uint) (string, error)
-	ParseToken(token string) (uint, error)
-}
-
-type JWTService struct {
-	secretKey []byte
-}
-
-func New(secretKey []byte) *JWTService {
-	return &JWTService{secretKey: secretKey}
-}
-
 var JwtKey = []byte("key")
 
-func (s *JWTService) GenerateToken(sub int) (string, error) {
+func GenerateToken(sub int) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": sub,
 		"exp": time.Now().Add(time.Hour * 24).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(s.secretKey)
+	tokenString, err := token.SignedString(JwtKey)
 	if err != nil {
 		return "", err
 	}
@@ -37,7 +24,7 @@ func (s *JWTService) GenerateToken(sub int) (string, error) {
 	return tokenString, nil
 }
 
-func (s *JWTService) ParseToken(tokenString string) (int, error) {
+func ParseToken(tokenString string) (int, error) {
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (
 		interface{},
@@ -46,7 +33,7 @@ func (s *JWTService) ParseToken(tokenString string) (int, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
 		}
-		return s.secretKey, nil
+		return JwtKey, nil
 	})
 
 	if err != nil {

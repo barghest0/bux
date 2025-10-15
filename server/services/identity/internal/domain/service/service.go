@@ -9,13 +9,11 @@ import (
 
 type UserService struct {
 	repo *repository.UserRepository
-	jwt  *auth.JWTService
 }
 
-func New(repo *repository.UserRepository, jwt *auth.JWTService) *UserService {
+func New(repo *repository.UserRepository) *UserService {
 	return &UserService{
 		repo: repo,
-		jwt:  jwt,
 	}
 }
 
@@ -59,7 +57,7 @@ func (s *UserService) Login(username string, password string) (*model.User, stri
 		return nil, "", fmt.Errorf("%s: %s", tag, "Неверные данные")
 	}
 
-	token, err := s.jwt.GenerateToken(user.ID)
+	token, err := auth.GenerateToken(user.ID)
 	if err != nil {
 		return nil, "", fmt.Errorf("%s: %s", tag, "Ошибка генерации токена")
 	}
@@ -70,7 +68,7 @@ func (s *UserService) Login(username string, password string) (*model.User, stri
 func (s *UserService) Me(token string) (*model.User, error) {
 	const tag = "service.Me"
 
-	userID, err := s.jwt.ParseToken(token)
+	userID, err := auth.ParseToken(token)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %s", tag, "Неверный токен")
 	}

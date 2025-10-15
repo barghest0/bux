@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"identity/internal/data/repository"
 	"identity/internal/domain/service"
-	"identity/internal/infra/auth"
 	"identity/internal/infra/db"
 	"identity/internal/presentation/http"
 	"identity/pkg/config"
@@ -34,7 +33,7 @@ func main() {
 	}
 
 	repo := repository.New(postgres)
-	service := service.New(repo, auth.New(auth.JwtKey))
+	service := service.New(repo)
 
 	r := gin.Default()
 	http.New(r, service)
