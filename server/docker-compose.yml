@@ -1,18 +1,32 @@
 version: "3.8"
 services:
-  identity:
-    build: ./services/identity
-    container_name: identity-service
+  user:
+    build: ./services/user
+    container_name: user-service
     depends_on: [postgres]
     restart: always
     environment: [CONFIG_PATH=/app/config/local.yaml]
     ports: [8081:8081]
     networks: [bux]
-    volumes: [./services/identity/config/local.yaml:/app/config/local.yaml]
+    volumes: [./services/user/config/local.yaml:/app/config/local.yaml]
     develop:
       watch:
         - action: rebuild
-          path: ./services/identity
+          path: ./services/user
+          target: /app
+  transaction:
+    build: ./services/transaction
+    container_name: transaction-service
+    depends_on: [postgres]
+    restart: always
+    environment: [CONFIG_PATH=/app/config/local.yaml]
+    ports: [8082:8082]
+    networks: [bux]
+    volumes: [./services/transaction/config/local.yaml:/app/config/local.yaml]
+    develop:
+      watch:
+        - action: rebuild
+          path: ./services/transaction
           target: /app
   postgres:
         image: postgres:16
