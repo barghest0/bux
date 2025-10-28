@@ -16,7 +16,7 @@ func New(repo *repository.TransactionRepository) *TransactionService {
 	}
 }
 
-func (s *TransactionService) GetTransactions() (*[]model.Transaction, error) {
+func (s *TransactionService) GetTransactions() ([]model.Transaction, error) {
 	const tag = "service.GetTransactions"
 
 	transactions, err := s.repo.GetAll()

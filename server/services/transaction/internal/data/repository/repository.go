@@ -29,12 +29,12 @@ func (r *TransactionRepository) GetByID(id uint) (*model.Transaction, error) {
 	return &user, nil
 }
 
-func (r *TransactionRepository) GetAll() (*[]model.Transaction, error) {
+func (r *TransactionRepository) GetAll() ([]model.Transaction, error) {
 	var users []model.Transaction
 	if err := r.db.Preload("Category").Find(&users).Error; err != nil {
 		return nil, err
 	}
-	return &users, nil
+	return users, nil
 }
 
 func (r *TransactionRepository) Update(user *model.Transaction) (*model.Transaction, error) {

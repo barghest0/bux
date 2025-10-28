@@ -3,6 +3,7 @@ package http
 import (
 	"net/http"
 	"transaction/internal/domain/service"
+	"transaction/internal/presentation/http/dto"
 	"transaction/internal/presentation/http/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -27,13 +28,13 @@ func New(r *gin.Engine, s *service.TransactionService) {
 }
 
 func (h *UserHTTP) Transactions(ctx *gin.Context) {
-	registeredUser, err := h.service.GetTransactions()
+	transactions, err := h.service.GetTransactions()
 	if err != nil {
 		ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, registeredUser)
+	ctx.JSON(http.StatusCreated, dto.FromModelList(transactions))
 }
 
 func (h *UserHTTP) Transaction(ctx *gin.Context) {
@@ -50,5 +51,5 @@ func (h *UserHTTP) Transaction(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, tx)
+	ctx.JSON(http.StatusOK, dto.FromModel(*tx))
 }
