@@ -23,7 +23,7 @@ func (r *TransactionRepository) Create(transaction *model.Transaction) (*model.T
 
 func (r *TransactionRepository) GetByID(id uint) (*model.Transaction, error) {
 	var user model.Transaction
-	if err := r.db.First(&user, id).Error; err != nil {
+	if err := r.db.Preload("Category").First(&user, id).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
@@ -31,7 +31,7 @@ func (r *TransactionRepository) GetByID(id uint) (*model.Transaction, error) {
 
 func (r *TransactionRepository) GetAll() (*[]model.Transaction, error) {
 	var users []model.Transaction
-	if err := r.db.Find(&users).Error; err != nil {
+	if err := r.db.Preload("Category").Find(&users).Error; err != nil {
 		return nil, err
 	}
 	return &users, nil
