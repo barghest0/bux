@@ -39,3 +39,15 @@ func (s *TransactionService) GetTransaction(id uint) (*model.Transaction, error)
 
 	return transaction, nil
 }
+
+func (s *TransactionService) CreateTransaction(transaction *model.Transaction) (*model.Transaction, error) {
+	const tag = "service.CreateTransaction"
+
+	transaction, err := s.repo.Create(transaction)
+
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", tag, err)
+	}
+
+	return transaction, nil
+}

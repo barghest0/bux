@@ -17,6 +17,13 @@ type TransactionResponse struct {
 	Category    *CategoryResponse `json:"category"`
 }
 
+type CreateTransactionRequest struct {
+	Amount      float64 `json:"amount" binding:"required"`
+	Currency    string  `json:"currency" binding:"required,len=3"`
+	Description string  `json:"description"`
+	CategoryID  *uint   `json:"category_id"`
+}
+
 func FromModel(tx model.Transaction) TransactionResponse {
 	var category *CategoryResponse
 

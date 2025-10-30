@@ -18,6 +18,11 @@ func (r *TransactionRepository) Create(transaction *model.Transaction) (*model.T
 	if err := r.db.Create(transaction).Error; err != nil {
 		return nil, err
 	}
+
+	if err := r.db.Preload("Category").First(transaction, transaction.ID).Error; err != nil {
+		return nil, err
+	}
+
 	return transaction, nil
 }
 

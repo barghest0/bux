@@ -9,7 +9,7 @@ import (
 
 var JwtKey = []byte("key")
 
-func ParseToken(tokenString string) (int, error) {
+func ParseToken(tokenString string) (uint, error) {
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (
 		interface{},
@@ -26,7 +26,7 @@ func ParseToken(tokenString string) (int, error) {
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		userID := int(claims["sub"].(float64))
+		userID := uint(claims["sub"].(float64))
 		expiration := claims["exp"].(float64)
 
 		expirationTime := time.Unix(int64(expiration), 0)
