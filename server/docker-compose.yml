@@ -14,6 +14,20 @@ services:
         - action: rebuild
           path: ./services/user
           target: /app
+  investemnts:
+    build: ./services/investment
+    container_name: investment-service
+    depends_on: [postgres]
+    restart: always
+    environment: [CONFIG_PATH=/app/config/local.yaml]
+    ports: [8083:8083]
+    networks: [bux]
+    volumes: [./services/investment/config/local.yaml:/app/config/local.yaml]
+    develop:
+      watch:
+        - action: rebuild
+          path: ./services/investment
+          target: /app
   transaction:
     build: ./services/transaction
     container_name: transaction-service
@@ -33,7 +47,7 @@ services:
         container_name: postgres
         restart: always
         environment:
-          POSTGRES_USER: postgres
+          POSTGRES_USER: barghest
           POSTGRES_PASSWORD: barghest
           POSTGRES_DB: postgres
         ports: [5432:5432]
@@ -49,6 +63,7 @@ services:
         networks: [bux]
         ports: [5050:80]
         depends_on: [postgres]
+        volumes: [./pgadmin/servers.json:/pgadmin4/servers.json]
 
 networks:
   bux:

@@ -1,2 +1,3 @@
 CREATE DATABASE users;
 CREATE DATABASE transactions;
+CREATE DATABASE investments;

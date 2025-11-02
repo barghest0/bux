@@ -1,0 +1,16 @@
+{
+	"Servers": {
+		"1": {
+			"Name": "bux",
+			"Group": "Servers",
+			"Host": "postgres",
+			"MaintenanceDB": "postgres",
+			"Shared": true,
+			"Port": 5432,
+			"Username": "barghest",
+			"Password": "barghest",
+			"SSLMode": "prefer",
+			"ConnectNow": true
+		}
+	}
+}
