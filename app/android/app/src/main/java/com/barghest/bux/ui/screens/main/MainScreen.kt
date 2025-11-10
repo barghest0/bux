@@ -54,7 +54,6 @@ fun MainScreen(
                                 .fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(item.type)
                             Text("${item.amount} ₽")
                         }
                     }
