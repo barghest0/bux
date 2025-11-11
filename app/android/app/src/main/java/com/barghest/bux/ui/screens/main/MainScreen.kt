@@ -7,6 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import org.koin.androidx.compose.koinViewModel
@@ -23,6 +25,14 @@ fun MainScreen(
         topBar = {
             TopAppBar(title = { Text("Мои финансы") })
         },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { navController.navigate("add_transaction") },
+                elevation = FloatingActionButtonDefaults.elevation(1.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Добавить транзакцию")
+            }
+        }
 
     ) { padding ->
         LazyColumn(
@@ -46,7 +56,6 @@ fun MainScreen(
                     val item = transactions.value[i]
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        elevation = CardDefaults.cardElevation(4.dp)
                     ) {
                         Row(
                             Modifier

@@ -1,17 +1,14 @@
 package com.barghest.bux.domain.service
 
 import com.barghest.bux.data.repository.TransactionRepository
+import com.barghest.bux.domain.model.NewTransaction
 import com.barghest.bux.domain.model.Transaction
 
 class TransactionService(
     private val repository: TransactionRepository
 ) {
-    suspend fun getBalance(): Double {
-        val list = repository.getAll()
-        return 0.0
-    }
 
-    suspend fun addTransaction(transaction: Transaction) {
+    suspend fun addTransaction(transaction: NewTransaction) {
         repository.add(transaction)
     }
 

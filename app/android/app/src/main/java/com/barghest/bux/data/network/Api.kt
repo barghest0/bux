@@ -1,17 +1,25 @@
 package com.barghest.bux.data.network
 
-import com.barghest.bux.data.model.TransactionDto
+import android.util.Log
+import com.barghest.bux.data.model.TransactionRequest
+import com.barghest.bux.data.model.TransactionResponse
 import io.ktor.client.*
 import io.ktor.client.call.*
+import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
 
 class Api() {
-    private val client = HttpClient {
+    private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
             json(Json {
                 prettyPrint = true
@@ -20,19 +28,40 @@ class Api() {
         }
 
         install(DefaultRequest) {
-            header("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjI4Nzk3NDAsInN1YiI6MX0.crCxDSVv26bqnVN1sNd2D5HaYB7SiPkeK5JgV5PR2tg")
+            contentType(ContentType.Application.Json)
+            header(
+                "Authorization",
+                "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjI5NjYyMjksInN1YiI6MX0.guZY_h7YyJC8crWpVPMUnpOOuFGXb3nqOrJySk-brVc"
+            )
         }
     }
 
     private val baseUrl = "http://10.0.2.2:8082"
 
-    suspend fun fetchTransactions(): List<TransactionDto> {
-        return client.get("$baseUrl/transactions").body()
+    suspend fun fetchTransactions(): Result<List<TransactionResponse>> = safeApiCall {
+        client.get("$baseUrl/transactions").body()
     }
 
-    suspend fun postTransaction(dto: TransactionDto) {
+    suspend fun postTransaction(request: TransactionRequest): Result<Unit> = safeApiCall {
         client.post("$baseUrl/transactions") {
-            setBody(dto)
+            setBody(request)
+        }
+        Unit
+    }
+
+    private suspend inline fun <T> safeApiCall(crossinline block: suspend () -> T): Result<T> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val result = block()
+                Result.success(result)
+            } catch (e: io.ktor.client.plugins.ResponseException) {
+                val errorBody = e.response.bodyAsText()
+                Log.e("Api", "HTTP Error ${e.response.status}: $errorBody")
+                Result.failure(Exception("HTTP ${e.response.status}: $errorBody"))
+            } catch (e: Exception) {
+                Log.e("Api", "Network Error: ${e.message}", e)
+                Result.failure(e)
+            }
         }
     }
 }

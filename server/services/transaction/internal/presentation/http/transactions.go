@@ -1,7 +1,6 @@
 package http
 
 import (
-	"log"
 	"net/http"
 	"transaction/internal/domain/model"
 	"transaction/internal/domain/service"
@@ -23,8 +22,8 @@ func New(r *gin.Engine, s *service.TransactionService) {
 	transactions := r.Group("/transactions")
 	transactions.Use(middleware.AuthMiddleware())
 	{
-		transactions.GET("/", h.Transactions)
-		transactions.POST("/", h.CreateTransaction)
+		transactions.GET("", h.Transactions)
+		transactions.POST("", h.CreateTransaction)
 		transactions.GET("/:id", h.Transactions)
 	}
 
@@ -79,8 +78,6 @@ func (h *UserHTTP) CreateTransaction(ctx *gin.Context) {
 	}
 
 	tx, err := h.service.CreateTransaction(transaction)
-
-	log.Println(*tx.CategoryID)
 
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

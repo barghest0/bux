@@ -16,9 +16,6 @@ class MainViewModel(
     private val _transactions = MutableStateFlow<List<Transaction>>(emptyList())
     val transactions = _transactions.asStateFlow()
 
-    private val _balance = MutableStateFlow(0.0)
-    val balance = _balance.asStateFlow()
-
     init {
         refresh()
     }
@@ -27,14 +24,6 @@ class MainViewModel(
         viewModelScope.launch {
             val data = service.getTransactions()
             _transactions.value = data
-            _balance.value = service.getBalance()
-        }
-    }
-
-    fun addTransaction(t: Transaction) {
-        viewModelScope.launch {
-            service.addTransaction(t)
-            refresh()
         }
     }
 }

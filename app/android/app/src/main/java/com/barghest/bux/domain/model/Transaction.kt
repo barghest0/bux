@@ -5,4 +5,11 @@ data class Transaction(
     val amount: Double
 )
 
+data class NewTransaction(
+    val amount: Double,
+    val currency: String
+)
+
 enum class TransactionType { INCOME, EXPENSE }
+
+
