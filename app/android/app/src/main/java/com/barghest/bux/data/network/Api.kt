@@ -1,8 +1,10 @@
 package com.barghest.bux.data.network
 
 import android.util.Log
-import com.barghest.bux.data.model.TransactionRequest
-import com.barghest.bux.data.model.TransactionResponse
+import com.barghest.bux.data.dto.LoginRequest
+import com.barghest.bux.data.dto.LoginResponse
+import com.barghest.bux.data.dto.TransactionRequest
+import com.barghest.bux.data.dto.TransactionResponse
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.cio.CIO
@@ -36,17 +38,23 @@ class Api() {
         }
     }
 
-    private val baseUrl = "http://10.0.2.2:8082"
+    private val transactionUrl = "http://10.0.2.2:8082"
+    private val userUrl = "http://10.0.2.2:8081"
 
     suspend fun fetchTransactions(): Result<List<TransactionResponse>> = safeApiCall {
-        client.get("$baseUrl/transactions").body()
+        client.get("$transactionUrl/transactions").body()
     }
 
     suspend fun postTransaction(request: TransactionRequest): Result<Unit> = safeApiCall {
-        client.post("$baseUrl/transactions") {
+        client.post("$transactionUrl/transactions") {
             setBody(request)
         }
-        Unit
+    }
+
+    suspend fun login(request: LoginRequest): Result<LoginResponse> = safeApiCall {
+        client.post("$userUrl/auth/login") {
+            setBody(request)
+        }.body()
     }
 
     private suspend inline fun <T> safeApiCall(crossinline block: suspend () -> T): Result<T> {

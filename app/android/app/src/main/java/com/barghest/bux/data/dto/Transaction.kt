@@ -1,4 +1,4 @@
-package com.barghest.bux.data.model
+package com.barghest.bux.data.dto
 
 import kotlinx.serialization.Serializable
 

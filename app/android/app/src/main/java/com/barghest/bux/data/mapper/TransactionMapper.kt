@@ -1,7 +1,7 @@
 package com.barghest.bux.data.mapper
 
-import com.barghest.bux.data.model.TransactionRequest
-import com.barghest.bux.data.model.TransactionResponse
+import com.barghest.bux.data.dto.TransactionRequest
+import com.barghest.bux.data.dto.TransactionResponse
 import com.barghest.bux.domain.model.NewTransaction
 import com.barghest.bux.domain.model.Transaction
 
