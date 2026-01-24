@@ -68,7 +68,26 @@ func (h *InvestmentHandler) CreateTrade(c *gin.Context) {
 		return
 	}
 
-	t, err := h.service.CreateTrade(req.PortfolioID, req.SecurityID, req.Side, req.Quantity, req.Price, req.Fee, date)
+	// Parse decimal values
+	qty, err := req.ParseQuantity()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid quantity format"})
+		return
+	}
+
+	price, err := req.ParsePrice()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid price format"})
+		return
+	}
+
+	fee, err := req.ParseFee()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid fee format"})
+		return
+	}
+
+	t, err := h.service.CreateTrade(req.PortfolioID, req.SecurityID, req.Side, qty, price, fee, date)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

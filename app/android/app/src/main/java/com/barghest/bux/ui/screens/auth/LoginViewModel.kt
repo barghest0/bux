@@ -5,29 +5,34 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.barghest.bux.domain.model.User
+import com.barghest.bux.data.local.TokenManager
 import com.barghest.bux.domain.service.AuthService
 import kotlinx.coroutines.launch
 
 class LoginViewModel(
-    private val authService: AuthService
+    private val authService: AuthService,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     var uiState by mutableStateOf(LoginUiState())
         private set
 
+    init {
+        // Check if already logged in
+        if (tokenManager.isLoggedIn()) {
+            uiState = uiState.copy(isLoggedIn = true)
+        }
+    }
+
     fun login() {
         viewModelScope.launch {
             uiState = uiState.copy(loading = true, error = null)
 
-            val result = authService.login(uiState.username, uiState.password)
-
-            result
-                .onSuccess { (user, token) ->
+            authService.login(uiState.username, uiState.password)
+                .onSuccess { user ->
                     uiState = uiState.copy(
                         loading = false,
-                        user = user,
-                        token = token
+                        isLoggedIn = true
                     )
                 }
                 .onFailure { e ->
@@ -53,6 +58,5 @@ data class LoginUiState(
     val password: String = "",
     val loading: Boolean = false,
     val error: String? = null,
-    val user: User? = null,
-    val token: String? = null
+    val isLoggedIn: Boolean = false
 )

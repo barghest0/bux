@@ -36,7 +36,7 @@ func (h *UserHTTP) Transactions(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, dto.FromModelList(transactions))
+	ctx.JSON(http.StatusOK, dto.FromModelList(transactions))
 }
 
 func (h *UserHTTP) Transaction(ctx *gin.Context) {
@@ -63,6 +63,13 @@ func (h *UserHTTP) CreateTransaction(ctx *gin.Context) {
 		return
 	}
 
+	// Parse amount from string to decimal
+	amount, err := body.ParseAmount()
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid amount format"})
+		return
+	}
+
 	userID, ok := ctx.Get("userID")
 	if !ok {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -71,7 +78,7 @@ func (h *UserHTTP) CreateTransaction(ctx *gin.Context) {
 
 	transaction := &model.Transaction{
 		UserID:      userID.(uint),
-		Amount:      body.Amount,
+		Amount:      amount,
 		Currency:    body.Currency,
 		CategoryID:  body.CategoryID,
 		Description: body.Description,

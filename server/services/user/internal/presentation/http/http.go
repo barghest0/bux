@@ -40,7 +40,7 @@ func (h *UserHTTP) Users(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, registeredUser)
+	ctx.JSON(http.StatusOK, registeredUser)
 }
 
 func (h *UserHTTP) Register(ctx *gin.Context) {

@@ -7,10 +7,11 @@ import com.barghest.bux.domain.model.Transaction
 class TransactionService(
     private val repository: TransactionRepository
 ) {
-
-    suspend fun addTransaction(transaction: NewTransaction) {
-        repository.add(transaction)
+    suspend fun addTransaction(transaction: NewTransaction): Result<Unit> {
+        return repository.add(transaction)
     }
 
-    suspend fun getTransactions(): List<Transaction> = repository.getAll()
+    suspend fun getTransactions(): Result<List<Transaction>> {
+        return repository.getAll()
+    }
 }

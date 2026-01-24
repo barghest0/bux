@@ -2,12 +2,32 @@ package auth
 
 import (
 	"errors"
+	"log"
+	"os"
+	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var JwtKey = []byte("key")
+var (
+	jwtKey     []byte
+	jwtKeyOnce sync.Once
+)
+
+func getJWTKey() []byte {
+	jwtKeyOnce.Do(func() {
+		secret := os.Getenv("JWT_SECRET")
+		if secret == "" {
+			log.Fatal("JWT_SECRET environment variable is required")
+		}
+		if len(secret) < 32 {
+			log.Fatal("JWT_SECRET must be at least 32 characters")
+		}
+		jwtKey = []byte(secret)
+	})
+	return jwtKey
+}
 
 func ParseToken(tokenString string) (uint, error) {
 
@@ -18,7 +38,7 @@ func ParseToken(tokenString string) (uint, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
 		}
-		return JwtKey, nil
+		return getJWTKey(), nil
 	})
 
 	if err != nil {

@@ -5,6 +5,8 @@ import (
 	"investment/internal/data/repository"
 	"investment/internal/domain/model"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 type InvestmentService struct {
@@ -15,7 +17,7 @@ func New(repo *repository.InvestmentRepository) *InvestmentService {
 	return &InvestmentService{repo: repo}
 }
 
-func (s *InvestmentService) CreateBroker(userID, name string) (*model.Broker, error) {
+func (s *InvestmentService) CreateBroker(userID uint, name string) (*model.Broker, error) {
 	if name == "" {
 		return nil, fmt.Errorf("create broker: name required")
 	}
@@ -30,7 +32,7 @@ func (s *InvestmentService) CreateBroker(userID, name string) (*model.Broker, er
 	return b, nil
 }
 
-func (s *InvestmentService) CreatePortfolio(userID string, brokerID uint, name, baseCurrency string) (*model.Portfolio, error) {
+func (s *InvestmentService) CreatePortfolio(userID uint, brokerID uint, name, baseCurrency string) (*model.Portfolio, error) {
 	if name == "" {
 		return nil, fmt.Errorf("create portfolio: name required")
 	}
@@ -50,12 +52,18 @@ func (s *InvestmentService) CreatePortfolio(userID string, brokerID uint, name, 
 	return p, nil
 }
 
-func (s *InvestmentService) CreateTrade(portfolioID, securityID uint, side string, qty, price, fee float64, date time.Time) (*model.Trade, error) {
+func (s *InvestmentService) CreateTrade(portfolioID, securityID uint, side string, qty, price, fee decimal.Decimal, date time.Time) (*model.Trade, error) {
 	if side != "buy" && side != "sell" {
 		return nil, fmt.Errorf("create trade: invalid side '%s'", side)
 	}
-	if qty <= 0 || price <= 0 {
-		return nil, fmt.Errorf("create trade: invalid qty %.2f or price %.2f", qty, price)
+	if qty.LessThanOrEqual(decimal.Zero) {
+		return nil, fmt.Errorf("create trade: quantity must be greater than zero")
+	}
+	if price.LessThanOrEqual(decimal.Zero) {
+		return nil, fmt.Errorf("create trade: price must be greater than zero")
+	}
+	if fee.LessThan(decimal.Zero) {
+		return nil, fmt.Errorf("create trade: fee cannot be negative")
 	}
 
 	t := &model.Trade{
@@ -74,19 +82,20 @@ func (s *InvestmentService) CreateTrade(portfolioID, securityID uint, side strin
 	return t, nil
 }
 
-func (s *InvestmentService) CalculateHoldings(portfolioID uint) (map[uint]float64, error) {
+func (s *InvestmentService) CalculateHoldings(portfolioID uint) (map[uint]decimal.Decimal, error) {
 	trades, err := s.repo.GetHoldings(portfolioID)
 	if err != nil {
 		return nil, fmt.Errorf("calculate holdings: %w", err)
 	}
 
-	positions := make(map[uint]float64)
+	positions := make(map[uint]decimal.Decimal)
 	for _, t := range trades {
+		current := positions[t.SecurityID]
 		switch t.Side {
 		case "buy":
-			positions[t.SecurityID] += t.Quantity
+			positions[t.SecurityID] = current.Add(t.Quantity)
 		case "sell":
-			positions[t.SecurityID] -= t.Quantity
+			positions[t.SecurityID] = current.Sub(t.Quantity)
 		default:
 			return nil, fmt.Errorf("calculate holdings: invalid side '%s' in trade %d", t.Side, t.ID)
 		}

@@ -5,7 +5,9 @@ services:
     container_name: user-service
     depends_on: [postgres]
     restart: always
-    environment: [CONFIG_PATH=/app/config/local.yaml]
+    environment:
+      - CONFIG_PATH=/app/config/local.yaml
+      - JWT_SECRET=${JWT_SECRET}
     ports: [8081:8081]
     networks: [bux]
     volumes: [./services/user/config/local.yaml:/app/config/local.yaml]
@@ -14,12 +16,14 @@ services:
         - action: rebuild
           path: ./services/user
           target: /app
-  investemnts:
+  investments:
     build: ./services/investment
     container_name: investment-service
     depends_on: [postgres]
     restart: always
-    environment: [CONFIG_PATH=/app/config/local.yaml]
+    environment:
+      - CONFIG_PATH=/app/config/local.yaml
+      - JWT_SECRET=${JWT_SECRET}
     ports: [8083:8083]
     networks: [bux]
     volumes: [./services/investment/config/local.yaml:/app/config/local.yaml]
@@ -33,7 +37,9 @@ services:
     container_name: transaction-service
     depends_on: [postgres]
     restart: always
-    environment: [CONFIG_PATH=/app/config/local.yaml]
+    environment:
+      - CONFIG_PATH=/app/config/local.yaml
+      - JWT_SECRET=${JWT_SECRET}
     ports: [8082:8082]
     networks: [bux]
     volumes: [./services/transaction/config/local.yaml:/app/config/local.yaml]
@@ -43,27 +49,28 @@ services:
           path: ./services/transaction
           target: /app
   postgres:
-        image: postgres:16
-        container_name: postgres
-        restart: always
-        environment:
-          POSTGRES_USER: barghest
-          POSTGRES_PASSWORD: barghest
-          POSTGRES_DB: postgres
-        ports: [5432:5432]
-        volumes: [pgdata:/var/lib/postgresql/data, ./init:/docker-entrypoint-initdb.d]
-        networks: [bux]
+    image: postgres:16
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: barghest
+      POSTGRES_PASSWORD: barghest
+      POSTGRES_DB: postgres
+    ports: [5432:5432]
+    volumes:
+      [pgdata:/var/lib/postgresql/data, ./init:/docker-entrypoint-initdb.d]
+    networks: [bux]
   pgadmin:
-        container_name: pgadmin
-        image: dpage/pgadmin4
-        restart: always
-        environment:
-            PGADMIN_DEFAULT_EMAIL: barghest391@gmail.com
-            PGADMIN_DEFAULT_PASSWORD: barghest
-        networks: [bux]
-        ports: [5050:80]
-        depends_on: [postgres]
-        volumes: [./pgadmin/servers.json:/pgadmin4/servers.json]
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: barghest391@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: barghest
+    networks: [bux]
+    ports: [5050:80]
+    depends_on: [postgres]
+    volumes: [./pgadmin/servers.json:/pgadmin4/servers.json]
 
 networks:
   bux:

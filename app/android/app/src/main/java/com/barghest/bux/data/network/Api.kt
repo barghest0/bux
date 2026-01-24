@@ -5,6 +5,7 @@ import com.barghest.bux.data.dto.LoginRequest
 import com.barghest.bux.data.dto.LoginResponse
 import com.barghest.bux.data.dto.TransactionRequest
 import com.barghest.bux.data.dto.TransactionResponse
+import com.barghest.bux.data.local.TokenManager
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.cio.CIO
@@ -20,7 +21,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
 
-class Api() {
+class Api(private val tokenManager: TokenManager) {
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
             json(Json {
@@ -31,22 +32,27 @@ class Api() {
 
         install(DefaultRequest) {
             contentType(ContentType.Application.Json)
-            header(
-                "Authorization",
-                "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjI5NjYyMjksInN1YiI6MX0.guZY_h7YyJC8crWpVPMUnpOOuFGXb3nqOrJySk-brVc"
-            )
         }
     }
 
     private val transactionUrl = "http://10.0.2.2:8082"
     private val userUrl = "http://10.0.2.2:8081"
 
+    private fun HttpRequestBuilder.addAuthHeader() {
+        tokenManager.getToken()?.let { token ->
+            header("Authorization", "Bearer $token")
+        }
+    }
+
     suspend fun fetchTransactions(): Result<List<TransactionResponse>> = safeApiCall {
-        client.get("$transactionUrl/transactions").body()
+        client.get("$transactionUrl/transactions") {
+            addAuthHeader()
+        }.body()
     }
 
     suspend fun postTransaction(request: TransactionRequest): Result<Unit> = safeApiCall {
         client.post("$transactionUrl/transactions") {
+            addAuthHeader()
             setBody(request)
         }
     }
