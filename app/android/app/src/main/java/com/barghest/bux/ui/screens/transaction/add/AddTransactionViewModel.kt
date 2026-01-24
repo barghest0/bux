@@ -6,29 +6,37 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.barghest.bux.data.repository.AccountRepository
+import com.barghest.bux.data.repository.CategoryRepository
 import com.barghest.bux.domain.model.Account
+import com.barghest.bux.domain.model.Category
+import com.barghest.bux.domain.model.CategoryType
 import com.barghest.bux.domain.model.NewTransaction
 import com.barghest.bux.domain.model.TransactionType
 import com.barghest.bux.domain.service.TransactionService
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
 
 class AddTransactionViewModel(
     private val transactionService: TransactionService,
-    accountRepository: AccountRepository
+    accountRepository: AccountRepository,
+    categoryRepository: CategoryRepository
 ) : ViewModel() {
 
     val accounts: StateFlow<List<Account>> = accountRepository.getActiveAccountsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val categories: StateFlow<List<Category>> = categoryRepository.getCategoriesFlow()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     var uiState by mutableStateOf(AddTransactionUiState())
         private set
 
     fun updateType(type: TransactionType) {
-        uiState = uiState.copy(type = type)
+        uiState = uiState.copy(type = type, selectedCategory = null)
     }
 
     fun updateAccount(account: Account) {
@@ -44,6 +52,10 @@ class AddTransactionViewModel(
 
     fun updateDescription(description: String) {
         uiState = uiState.copy(description = description)
+    }
+
+    fun updateCategory(category: Category?) {
+        uiState = uiState.copy(selectedCategory = category)
     }
 
     fun save(onSuccess: () -> Unit) {
@@ -67,6 +79,7 @@ class AddTransactionViewModel(
                 type = uiState.type,
                 amount = amount,
                 currency = uiState.currency,
+                categoryId = uiState.selectedCategory?.id,
                 description = uiState.description.ifBlank { null }
             )
 
@@ -88,6 +101,7 @@ class AddTransactionViewModel(
 data class AddTransactionUiState(
     val type: TransactionType = TransactionType.EXPENSE,
     val selectedAccount: Account? = null,
+    val selectedCategory: Category? = null,
     val amountText: String = "",
     val currency: String = "RUB",
     val description: String = "",

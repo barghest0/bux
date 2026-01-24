@@ -17,9 +17,9 @@ Phase 0: Security & Foundation     ✅ ЗАВЕРШЕНО (2025-01-24)
     ↓
 Phase 1: Core Domain Model         ✅ ЗАВЕРШЕНО (2026-01-24)
     ↓
-Phase 2: Investments & Assets      ← СЛЕДУЮЩАЯ
+Phase 2: Investments & Assets      ✅ ЗАВЕРШЕНО (2026-01-24)
     ↓
-Phase 3: Analytics & Scale
+Phase 3: Analytics & Scale         ← СЛЕДУЮЩАЯ
 ```
 
 ## Быстрый старт
@@ -53,14 +53,34 @@ Phase 3: Analytics & Scale
 | Обновленный MainScreen с счетами | DONE |
 | AddTransaction с выбором счета | DONE |
 
-## Phase 2: Следующие задачи
+## Phase 2: Categories, Investments & Sync (ЗАВЕРШЕНО)
+
+| Задача | Статус |
+|--------|--------|
+| Category модель (backend) | DONE |
+| Category repository, service, handlers | DONE |
+| Default categories seeder | DONE |
+| Holding model с P&L расчетами | DONE |
+| PriceHistory model | DONE |
+| Portfolio value endpoint | DONE |
+| CategoryEntity и CategoryDao (Android) | DONE |
+| CategoriesScreen и AddCategoryScreen | DONE |
+| Update AddTransactionScreen с категориями | DONE |
+| SyncManager и SyncWorker | DONE |
+| Pull-to-refresh на экранах | DONE |
+| PortfoliosScreen | DONE |
+| PortfolioDetailScreen с holdings | DONE |
+| AddTradeScreen | DONE |
+
+## Phase 3: Следующие задачи
 
 | Задача | Приоритет |
 |--------|-----------|
-| Category модель и CRUD | HIGH |
-| Investment/Portfolio integration | HIGH |
-| Sync mechanism (offline-first) | MEDIUM |
-| Analytics и отчеты | MEDIUM |
+| Analytics dashboard | HIGH |
+| Net Worth calculation | HIGH |
+| Reports и графики | MEDIUM |
+| Budget tracking | MEDIUM |
+| Export данных | LOW |
 
 ## Контакты
 

@@ -22,6 +22,9 @@ class CategoriesViewModel(
     private val _selectedType = MutableStateFlow(CategoryType.EXPENSE)
     val selectedType: StateFlow<CategoryType> = _selectedType.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     init {
         observeCategories()
         refresh()
@@ -44,12 +47,17 @@ class CategoriesViewModel(
 
     fun refresh() {
         viewModelScope.launch {
-            categoryRepository.refreshCategories()
-                .onFailure { e ->
-                    if (_state.value is CategoriesState.Loading) {
-                        _state.value = CategoriesState.Error(e.message ?: "Failed to load categories")
+            _isRefreshing.value = true
+            try {
+                categoryRepository.refreshCategories()
+                    .onFailure { e ->
+                        if (_state.value is CategoriesState.Loading) {
+                            _state.value = CategoriesState.Error(e.message ?: "Failed to load categories")
+                        }
                     }
-                }
+            } finally {
+                _isRefreshing.value = false
+            }
         }
     }
 

@@ -2,12 +2,20 @@ package com.barghest.bux.data.network
 
 import android.util.Log
 import com.barghest.bux.data.dto.AccountResponse
+import com.barghest.bux.data.dto.BrokerResponse
 import com.barghest.bux.data.dto.CategoryResponse
 import com.barghest.bux.data.dto.CreateAccountRequest
+import com.barghest.bux.data.dto.CreateBrokerRequest
 import com.barghest.bux.data.dto.CreateCategoryRequest
+import com.barghest.bux.data.dto.CreatePortfolioRequest
+import com.barghest.bux.data.dto.CreateTradeRequest
 import com.barghest.bux.data.dto.CreateTransactionRequest
 import com.barghest.bux.data.dto.LoginRequest
 import com.barghest.bux.data.dto.LoginResponse
+import com.barghest.bux.data.dto.PortfolioResponse
+import com.barghest.bux.data.dto.PortfolioSummaryResponse
+import com.barghest.bux.data.dto.SecurityResponse
+import com.barghest.bux.data.dto.TradeResponse
 import com.barghest.bux.data.dto.TransactionResponse
 import com.barghest.bux.data.dto.UpdateAccountRequest
 import com.barghest.bux.data.dto.UpdateCategoryRequest
@@ -43,6 +51,7 @@ class Api(private val tokenManager: TokenManager) {
 
     private val transactionUrl = "http://10.0.2.2:8082"
     private val userUrl = "http://10.0.2.2:8081"
+    private val investmentUrl = "http://10.0.2.2:8083"
 
     private fun HttpRequestBuilder.addAuthHeader() {
         tokenManager.getToken()?.let { token ->
@@ -143,6 +152,75 @@ class Api(private val tokenManager: TokenManager) {
         client.delete("$transactionUrl/categories/$id") {
             addAuthHeader()
         }
+    }
+
+    // Investments - Brokers
+    suspend fun fetchBrokers(): Result<List<BrokerResponse>> = safeApiCall {
+        client.get("$investmentUrl/api/brokers") {
+            addAuthHeader()
+        }.body()
+    }
+
+    suspend fun createBroker(request: CreateBrokerRequest): Result<BrokerResponse> = safeApiCall {
+        client.post("$investmentUrl/api/brokers") {
+            addAuthHeader()
+            setBody(request)
+        }.body()
+    }
+
+    // Investments - Portfolios
+    suspend fun fetchPortfolios(): Result<List<PortfolioResponse>> = safeApiCall {
+        client.get("$investmentUrl/api/portfolios") {
+            addAuthHeader()
+        }.body()
+    }
+
+    suspend fun fetchPortfolio(id: Int): Result<PortfolioResponse> = safeApiCall {
+        client.get("$investmentUrl/api/portfolios/$id") {
+            addAuthHeader()
+        }.body()
+    }
+
+    suspend fun fetchPortfolioSummary(id: Int): Result<PortfolioSummaryResponse> = safeApiCall {
+        client.get("$investmentUrl/api/portfolios/$id/summary") {
+            addAuthHeader()
+        }.body()
+    }
+
+    suspend fun createPortfolio(request: CreatePortfolioRequest): Result<PortfolioResponse> = safeApiCall {
+        client.post("$investmentUrl/api/portfolios") {
+            addAuthHeader()
+            setBody(request)
+        }.body()
+    }
+
+    // Investments - Trades
+    suspend fun fetchTrades(portfolioId: Int): Result<List<TradeResponse>> = safeApiCall {
+        client.get("$investmentUrl/api/portfolios/$portfolioId/trades") {
+            addAuthHeader()
+        }.body()
+    }
+
+    suspend fun createTrade(request: CreateTradeRequest): Result<TradeResponse> = safeApiCall {
+        client.post("$investmentUrl/api/trades") {
+            addAuthHeader()
+            setBody(request)
+        }.body()
+    }
+
+    // Investments - Securities
+    suspend fun searchSecurities(query: String, type: String? = null): Result<List<SecurityResponse>> = safeApiCall {
+        client.get("$investmentUrl/api/securities") {
+            addAuthHeader()
+            parameter("query", query)
+            type?.let { parameter("type", it) }
+        }.body()
+    }
+
+    suspend fun fetchSecurity(id: Int): Result<SecurityResponse> = safeApiCall {
+        client.get("$investmentUrl/api/securities/$id") {
+            addAuthHeader()
+        }.body()
     }
 
     private suspend inline fun <T> safeApiCall(crossinline block: suspend () -> T): Result<T> {

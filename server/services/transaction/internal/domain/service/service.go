@@ -14,8 +14,6 @@ var (
 	ErrInvalidAmount              = errors.New("amount must be greater than zero")
 	ErrInvalidCurrency            = errors.New("currency must be exactly 3 characters")
 	ErrInvalidTransactionType     = errors.New("invalid transaction type")
-	ErrAccountNotFound            = errors.New("account not found")
-	ErrAccountAccessDenied        = errors.New("access denied to this account")
 	ErrDestinationAccountRequired = errors.New("destination account required for transfer")
 	ErrDestinationAccountNotFound = errors.New("destination account not found")
 )

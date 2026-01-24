@@ -31,6 +31,9 @@ class MainViewModel(
     private val _state = MutableStateFlow<MainScreenState>(MainScreenState.Loading)
     val state: StateFlow<MainScreenState> = _state.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     init {
         observeData()
         refresh()
@@ -55,8 +58,13 @@ class MainViewModel(
 
     fun refresh() {
         viewModelScope.launch {
-            accountRepository.refreshAccounts()
-            transactionService.refreshTransactions()
+            _isRefreshing.value = true
+            try {
+                accountRepository.refreshAccounts()
+                transactionService.refreshTransactions()
+            } finally {
+                _isRefreshing.value = false
+            }
         }
     }
 }

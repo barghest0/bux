@@ -7,13 +7,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-type CategoryResponse struct {
-	ID    uint   `json:"id"`
-	Name  string `json:"name"`
-	Color string `json:"color"`
-	Icon  string `json:"icon"`
-}
-
 type TransactionResponse struct {
 	ID                   uint              `json:"id"`
 	AccountID            uint              `json:"account_id"`
@@ -53,12 +46,8 @@ func FromModel(tx model.Transaction) TransactionResponse {
 	var category *CategoryResponse
 
 	if tx.Category != nil {
-		category = &CategoryResponse{
-			ID:    tx.Category.ID,
-			Name:  tx.Category.Name,
-			Color: tx.Category.Color,
-			Icon:  tx.Category.Icon,
-		}
+		cat := CategoryFromModel(*tx.Category)
+		category = &cat
 	}
 
 	return TransactionResponse{

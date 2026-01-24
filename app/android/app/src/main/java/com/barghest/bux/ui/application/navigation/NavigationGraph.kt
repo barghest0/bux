@@ -9,6 +9,13 @@ import com.barghest.bux.ui.screens.accounts.AddAccountScreen
 import com.barghest.bux.ui.screens.auth.LoginScreen
 import com.barghest.bux.ui.screens.main.MainScreen
 import com.barghest.bux.ui.screens.transaction.add.AddTransactionScreen
+import com.barghest.bux.ui.screens.categories.CategoriesScreen
+import com.barghest.bux.ui.screens.categories.AddCategoryScreen
+import com.barghest.bux.ui.screens.investments.AddTradeScreen
+import com.barghest.bux.ui.screens.investments.PortfolioDetailScreen
+import com.barghest.bux.ui.screens.investments.PortfoliosScreen
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 
 sealed class Screen(val route: String) {
     data object Main : Screen("main")
@@ -16,6 +23,11 @@ sealed class Screen(val route: String) {
     data object Login : Screen("login")
     data object Accounts : Screen("accounts")
     data object AddAccount : Screen("add_account")
+    data object Categories : Screen("categories")
+    data object AddCategory : Screen("add_category")
+    data object Portfolios : Screen("portfolios")
+    data object PortfolioDetail : Screen("portfolio/{portfolioId}")
+    data object AddTrade : Screen("add_trade/{portfolioId}")
 }
 
 @Composable
@@ -35,6 +47,27 @@ fun NavigationGraph(navController: NavHostController) {
         }
         composable(Screen.AddAccount.route) {
             AddAccountScreen(navController)
+        }
+        composable(Screen.Categories.route) {
+            CategoriesScreen(navController)
+        }
+        composable(Screen.AddCategory.route) {
+            AddCategoryScreen(navController)
+        }
+        composable(Screen.Portfolios.route) {
+            PortfoliosScreen(navController)
+        }
+        composable(
+            route = Screen.PortfolioDetail.route,
+            arguments = listOf(navArgument("portfolioId") { type = NavType.IntType })
+        ) {
+            PortfolioDetailScreen(navController)
+        }
+        composable(
+            route = Screen.AddTrade.route,
+            arguments = listOf(navArgument("portfolioId") { type = NavType.IntType })
+        ) {
+            AddTradeScreen(navController)
         }
     }
 }

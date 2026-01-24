@@ -6,12 +6,19 @@ import com.barghest.bux.data.network.Api
 import com.barghest.bux.data.repository.AccountRepository
 import com.barghest.bux.data.repository.AuthRepository
 import com.barghest.bux.data.repository.CategoryRepository
+import com.barghest.bux.data.repository.InvestmentRepository
 import com.barghest.bux.data.repository.TransactionRepository
+import com.barghest.bux.data.sync.SyncManager
 import com.barghest.bux.domain.service.AuthService
 import com.barghest.bux.domain.service.TransactionService
 import com.barghest.bux.ui.screens.accounts.AccountsViewModel
 import com.barghest.bux.ui.screens.accounts.AddAccountViewModel
 import com.barghest.bux.ui.screens.auth.LoginViewModel
+import com.barghest.bux.ui.screens.categories.AddCategoryViewModel
+import com.barghest.bux.ui.screens.categories.CategoriesViewModel
+import com.barghest.bux.ui.screens.investments.AddTradeViewModel
+import com.barghest.bux.ui.screens.investments.PortfolioDetailViewModel
+import com.barghest.bux.ui.screens.investments.PortfoliosViewModel
 import com.barghest.bux.ui.screens.main.MainViewModel
 import com.barghest.bux.ui.screens.transaction.add.AddTransactionViewModel
 import org.koin.android.ext.koin.androidContext
@@ -37,6 +44,10 @@ val appModule = module {
     single { TransactionRepository(get(), get(), get()) }
     single { CategoryRepository(get(), get(), get()) }
     single { AuthRepository(get(), get()) }
+    single { InvestmentRepository(get(), get()) }
+
+    // Sync
+    single { SyncManager(get(), get(), get()) }
 
     // Services
     single { TransactionService(get()) }
@@ -45,7 +56,12 @@ val appModule = module {
     // ViewModels
     viewModel { MainViewModel(get(), get()) }
     viewModel { LoginViewModel(get(), get()) }
-    viewModel { AddTransactionViewModel(get(), get()) }
+    viewModel { AddTransactionViewModel(get(), get(), get()) }
     viewModel { AccountsViewModel(get()) }
     viewModel { AddAccountViewModel(get()) }
+    viewModel { CategoriesViewModel(get()) }
+    viewModel { AddCategoryViewModel(get()) }
+    viewModel { PortfoliosViewModel(get()) }
+    viewModel { PortfolioDetailViewModel(get(), get()) }
+    viewModel { AddTradeViewModel(get(), get()) }
 }

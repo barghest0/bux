@@ -35,6 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -57,6 +58,7 @@ fun CategoriesScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val selectedType by viewModel.selectedType.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     Scaffold(
         topBar = {
@@ -154,31 +156,38 @@ fun CategoriesScreen(
                         val filteredCategories = currentState.categories
                             .filter { it.type == selectedType }
 
-                        if (filteredCategories.isEmpty()) {
-                            Column(
-                                modifier = Modifier.align(Alignment.Center),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(
-                                    text = if (selectedType == CategoryType.EXPENSE) {
-                                        "Нет категорий расходов"
-                                    } else {
-                                        "Нет категорий доходов"
-                                    },
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                        PullToRefreshBox(
+                            isRefreshing = isRefreshing,
+                            onRefresh = { viewModel.refresh() },
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            if (filteredCategories.isEmpty()) {
+                                Column(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = if (selectedType == CategoryType.EXPENSE) {
+                                            "Нет категорий расходов"
+                                        } else {
+                                            "Нет категорий доходов"
+                                        },
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            } else {
+                                CategoriesList(
+                                    categories = filteredCategories,
+                                    onCategoryClick = { /* TODO: Edit category */ },
+                                    onDeleteClick = { category ->
+                                        if (!category.isSystem) {
+                                            viewModel.deleteCategory(category.id)
+                                        }
+                                    }
                                 )
                             }
-                        } else {
-                            CategoriesList(
-                                categories = filteredCategories,
-                                onCategoryClick = { /* TODO: Edit category */ },
-                                onDeleteClick = { category ->
-                                    if (!category.isSystem) {
-                                        viewModel.deleteCategory(category.id)
-                                    }
-                                }
-                            )
                         }
                     }
                 }

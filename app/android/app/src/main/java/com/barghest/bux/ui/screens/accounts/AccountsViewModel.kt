@@ -18,6 +18,9 @@ class AccountsViewModel(
     private val _state = MutableStateFlow<AccountsState>(AccountsState.Loading)
     val state: StateFlow<AccountsState> = _state.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     init {
         observeAccounts()
         refresh()
@@ -40,12 +43,17 @@ class AccountsViewModel(
 
     fun refresh() {
         viewModelScope.launch {
-            accountRepository.refreshAccounts()
-                .onFailure { e ->
-                    if (_state.value is AccountsState.Loading) {
-                        _state.value = AccountsState.Error(e.message ?: "Failed to load accounts")
+            _isRefreshing.value = true
+            try {
+                accountRepository.refreshAccounts()
+                    .onFailure { e ->
+                        if (_state.value is AccountsState.Loading) {
+                            _state.value = AccountsState.Error(e.message ?: "Failed to load accounts")
+                        }
                     }
-                }
+            } finally {
+                _isRefreshing.value = false
+            }
         }
     }
 

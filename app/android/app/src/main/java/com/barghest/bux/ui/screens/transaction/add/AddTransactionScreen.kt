@@ -13,6 +13,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.barghest.bux.domain.model.Account
+import com.barghest.bux.domain.model.Category
+import com.barghest.bux.domain.model.CategoryType
 import com.barghest.bux.domain.model.TransactionType
 import com.barghest.bux.ui.screens.accounts.icon
 import org.koin.androidx.compose.koinViewModel
@@ -24,6 +26,7 @@ fun AddTransactionScreen(
     viewModel: AddTransactionViewModel = koinViewModel()
 ) {
     val accounts by viewModel.accounts.collectAsState()
+    val categories by viewModel.categories.collectAsState()
     val state = viewModel.uiState
 
     Scaffold(
@@ -57,6 +60,19 @@ fun AddTransactionScreen(
                 accounts = accounts,
                 selectedAccount = state.selectedAccount,
                 onAccountSelected = viewModel::updateAccount
+            )
+
+            // Category selector
+            CategoryDropdown(
+                categories = categories.filter { category ->
+                    when (state.type) {
+                        TransactionType.INCOME -> category.type == CategoryType.INCOME
+                        TransactionType.EXPENSE -> category.type == CategoryType.EXPENSE
+                        TransactionType.TRANSFER -> false
+                    }
+                },
+                selectedCategory = state.selectedCategory,
+                onCategorySelected = viewModel::updateCategory
             )
 
             // Amount
@@ -166,6 +182,55 @@ fun AccountDropdown(
                     },
                     leadingIcon = {
                         Icon(account.type.icon(), contentDescription = null)
+                    }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CategoryDropdown(
+    categories: List<Category>,
+    selectedCategory: Category?,
+    onCategorySelected: (Category?) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it }
+    ) {
+        OutlinedTextField(
+            value = selectedCategory?.let { "${it.icon} ${it.name}" } ?: "",
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Категория") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+            placeholder = { Text("Выберите категорию (опционально)") }
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("Без категории") },
+                onClick = {
+                    onCategorySelected(null)
+                    expanded = false
+                }
+            )
+            categories.forEach { category ->
+                DropdownMenuItem(
+                    text = { Text("${category.icon} ${category.name}") },
+                    onClick = {
+                        onCategorySelected(category)
+                        expanded = false
                     }
                 )
             }
