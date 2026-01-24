@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"strconv"
 	"transaction/internal/domain/model"
 	"transaction/internal/domain/service"
 	"transaction/internal/presentation/http/dto"
@@ -10,36 +11,58 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type UserHTTP struct {
+type TransactionHTTP struct {
 	service *service.TransactionService
 }
 
 func New(r *gin.Engine, s *service.TransactionService) {
-	h := &UserHTTP{
+	h := &TransactionHTTP{
 		service: s,
 	}
 
 	transactions := r.Group("/transactions")
 	transactions.Use(middleware.AuthMiddleware())
 	{
-		transactions.GET("", h.Transactions)
+		transactions.GET("", h.GetTransactions)
 		transactions.POST("", h.CreateTransaction)
-		transactions.GET("/:id", h.Transactions)
+		transactions.GET("/:id", h.GetTransaction)
 	}
-
 }
 
-func (h *UserHTTP) Transactions(ctx *gin.Context) {
-	transactions, err := h.service.GetTransactions()
+func (h *TransactionHTTP) GetTransactions(ctx *gin.Context) {
+	userID, ok := ctx.Get("userID")
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	// Check for account_id query param
+	accountIDStr := ctx.Query("account_id")
+	if accountIDStr != "" {
+		accountID, err := strconv.ParseUint(accountIDStr, 10, 32)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid account_id"})
+			return
+		}
+		transactions, err := h.service.GetTransactionsByAccount(uint(accountID), userID.(uint))
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		ctx.JSON(http.StatusOK, dto.FromModelList(transactions))
+		return
+	}
+
+	transactions, err := h.service.GetTransactionsByUser(userID.(uint))
 	if err != nil {
-		ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	ctx.JSON(http.StatusOK, dto.FromModelList(transactions))
 }
 
-func (h *UserHTTP) Transaction(ctx *gin.Context) {
+func (h *TransactionHTTP) GetTransaction(ctx *gin.Context) {
 	var uri TransactionURI
 	if err := ctx.ShouldBindUri(&uri); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
@@ -47,7 +70,6 @@ func (h *UserHTTP) Transaction(ctx *gin.Context) {
 	}
 
 	tx, err := h.service.GetTransaction(uri.ID)
-
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "transaction not found"})
 		return
@@ -56,17 +78,22 @@ func (h *UserHTTP) Transaction(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, dto.FromModel(*tx))
 }
 
-func (h *UserHTTP) CreateTransaction(ctx *gin.Context) {
-	var body dto.CreateTransactionRequest
-	if err := ctx.ShouldBindJSON(&body); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+func (h *TransactionHTTP) CreateTransaction(ctx *gin.Context) {
+	var req dto.CreateTransactionRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Parse amount from string to decimal
-	amount, err := body.ParseAmount()
+	amount, err := req.ParseAmount()
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid amount format"})
+		return
+	}
+
+	transactionDate, err := req.ParseTransactionDate()
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid transaction_date format"})
 		return
 	}
 
@@ -77,17 +104,31 @@ func (h *UserHTTP) CreateTransaction(ctx *gin.Context) {
 	}
 
 	transaction := &model.Transaction{
-		UserID:      userID.(uint),
-		Amount:      amount,
-		Currency:    body.Currency,
-		CategoryID:  body.CategoryID,
-		Description: body.Description,
+		UserID:               userID.(uint),
+		AccountID:            req.AccountID,
+		DestinationAccountID: req.DestinationAccountID,
+		Type:                 model.TransactionType(req.Type),
+		Amount:               amount,
+		Currency:             req.Currency,
+		CategoryID:           req.CategoryID,
+		Description:          req.Description,
+		TransactionDate:      transactionDate,
 	}
 
 	tx, err := h.service.CreateTransaction(transaction)
-
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		status := http.StatusInternalServerError
+		if err == service.ErrInvalidAmount ||
+			err == service.ErrInvalidCurrency ||
+			err == service.ErrInvalidTransactionType ||
+			err == service.ErrDestinationAccountRequired {
+			status = http.StatusBadRequest
+		} else if err == service.ErrAccountNotFound || err == service.ErrDestinationAccountNotFound {
+			status = http.StatusNotFound
+		} else if err == service.ErrAccountAccessDenied {
+			status = http.StatusForbidden
+		}
+		ctx.JSON(status, gin.H{"error": err.Error()})
 		return
 	}
 

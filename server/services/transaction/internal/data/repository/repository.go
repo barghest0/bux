@@ -27,30 +27,50 @@ func (r *TransactionRepository) Create(transaction *model.Transaction) (*model.T
 }
 
 func (r *TransactionRepository) GetByID(id uint) (*model.Transaction, error) {
-	var user model.Transaction
-	if err := r.db.Preload("Category").First(&user, id).Error; err != nil {
+	var tx model.Transaction
+	if err := r.db.Preload("Category").First(&tx, id).Error; err != nil {
 		return nil, err
 	}
-	return &user, nil
+	return &tx, nil
 }
 
 func (r *TransactionRepository) GetAll() ([]model.Transaction, error) {
-	var users []model.Transaction
-	if err := r.db.Preload("Category").Find(&users).Error; err != nil {
+	var txs []model.Transaction
+	if err := r.db.Preload("Category").Order("transaction_date DESC").Find(&txs).Error; err != nil {
 		return nil, err
 	}
-	return users, nil
+	return txs, nil
 }
 
-func (r *TransactionRepository) Update(user *model.Transaction) (*model.Transaction, error) {
-	if err := r.db.Save(user).Error; err != nil {
+func (r *TransactionRepository) GetByUserID(userID uint) ([]model.Transaction, error) {
+	var txs []model.Transaction
+	if err := r.db.Preload("Category").
+		Where("user_id = ?", userID).
+		Order("transaction_date DESC").
+		Find(&txs).Error; err != nil {
 		return nil, err
 	}
-
-	return user, nil
-
+	return txs, nil
 }
 
-func (r *TransactionRepository) Delete(id int) error {
+func (r *TransactionRepository) GetByAccountID(accountID, userID uint) ([]model.Transaction, error) {
+	var txs []model.Transaction
+	if err := r.db.Preload("Category").
+		Where("(account_id = ? OR destination_account_id = ?) AND user_id = ?", accountID, accountID, userID).
+		Order("transaction_date DESC").
+		Find(&txs).Error; err != nil {
+		return nil, err
+	}
+	return txs, nil
+}
+
+func (r *TransactionRepository) Update(tx *model.Transaction) (*model.Transaction, error) {
+	if err := r.db.Save(tx).Error; err != nil {
+		return nil, err
+	}
+	return tx, nil
+}
+
+func (r *TransactionRepository) Delete(id uint) error {
 	return r.db.Delete(&model.Transaction{}, id).Error
 }

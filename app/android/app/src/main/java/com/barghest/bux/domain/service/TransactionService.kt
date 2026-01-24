@@ -3,15 +3,24 @@ package com.barghest.bux.domain.service
 import com.barghest.bux.data.repository.TransactionRepository
 import com.barghest.bux.domain.model.NewTransaction
 import com.barghest.bux.domain.model.Transaction
+import kotlinx.coroutines.flow.Flow
 
 class TransactionService(
     private val repository: TransactionRepository
 ) {
-    suspend fun addTransaction(transaction: NewTransaction): Result<Unit> {
-        return repository.add(transaction)
+    fun getTransactionsFlow(): Flow<List<Transaction>> {
+        return repository.getTransactionsFlow()
     }
 
-    suspend fun getTransactions(): Result<List<Transaction>> {
-        return repository.getAll()
+    fun getTransactionsByAccountFlow(accountId: Int): Flow<List<Transaction>> {
+        return repository.getTransactionsByAccountFlow(accountId)
+    }
+
+    suspend fun refreshTransactions(): Result<List<Transaction>> {
+        return repository.refreshTransactions()
+    }
+
+    suspend fun createTransaction(transaction: NewTransaction): Result<Transaction> {
+        return repository.createTransaction(transaction)
     }
 }

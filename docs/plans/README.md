@@ -15,9 +15,9 @@
 ```
 Phase 0: Security & Foundation     ✅ ЗАВЕРШЕНО (2025-01-24)
     ↓
-Phase 1: Core Domain Model         ← СЛЕДУЮЩАЯ
+Phase 1: Core Domain Model         ✅ ЗАВЕРШЕНО (2026-01-24)
     ↓
-Phase 2: Investments & Assets
+Phase 2: Investments & Assets      ← СЛЕДУЮЩАЯ
     ↓
 Phase 3: Analytics & Scale
 ```
@@ -26,7 +26,7 @@ Phase 3: Analytics & Scale
 
 1. Прочитать [current-state-analysis.md](./current-state-analysis.md) для понимания текущего состояния
 2. Изучить [architecture-evolution-plan.md](./architecture-evolution-plan.md) для общей картины
-3. Phase 0 завершена — следующий этап Phase 1
+3. Phase 0 и Phase 1 завершены — следующий этап Phase 2
 
 ## Phase 0: Критические проблемы (ИСПРАВЛЕНЫ)
 
@@ -38,14 +38,29 @@ Phase 3: Analytics & Scale
 | Cleartext traffic (Android) | HIGH | DONE |
 | Silent failures в repositories | MEDIUM | DONE |
 
-## Phase 1: Следующие задачи
+## Phase 1: Core Domain Model (ЗАВЕРШЕНО)
+
+| Задача | Статус |
+|--------|--------|
+| Account модель (backend) | DONE |
+| Account repository, service, handlers | DONE |
+| Расширенная Transaction модель (Type, Status, AccountID) | DONE |
+| Transaction с обновлением балансов | DONE |
+| Room Database (Android) | DONE |
+| Account/Transaction entities и DAOs | DONE |
+| Accounts list screen | DONE |
+| Add Account screen | DONE |
+| Обновленный MainScreen с счетами | DONE |
+| AddTransaction с выбором счета | DONE |
+
+## Phase 2: Следующие задачи
 
 | Задача | Приоритет |
 |--------|-----------|
-| Account модель (центр финансов) | HIGH |
-| Расширенная Transaction модель | HIGH |
-| Room Database для offline-first | HIGH |
-| Sync mechanism | MEDIUM |
+| Category модель и CRUD | HIGH |
+| Investment/Portfolio integration | HIGH |
+| Sync mechanism (offline-first) | MEDIUM |
+| Analytics и отчеты | MEDIUM |
 
 ## Контакты
 

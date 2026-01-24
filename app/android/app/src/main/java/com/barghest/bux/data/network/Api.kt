@@ -1,10 +1,13 @@
 package com.barghest.bux.data.network
 
 import android.util.Log
+import com.barghest.bux.data.dto.AccountResponse
+import com.barghest.bux.data.dto.CreateAccountRequest
+import com.barghest.bux.data.dto.CreateTransactionRequest
 import com.barghest.bux.data.dto.LoginRequest
 import com.barghest.bux.data.dto.LoginResponse
-import com.barghest.bux.data.dto.TransactionRequest
 import com.barghest.bux.data.dto.TransactionResponse
+import com.barghest.bux.data.dto.UpdateAccountRequest
 import com.barghest.bux.data.local.TokenManager
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -44,21 +47,63 @@ class Api(private val tokenManager: TokenManager) {
         }
     }
 
+    // Auth
+    suspend fun login(request: LoginRequest): Result<LoginResponse> = safeApiCall {
+        client.post("$userUrl/auth/login") {
+            setBody(request)
+        }.body()
+    }
+
+    // Accounts
+    suspend fun fetchAccounts(): Result<List<AccountResponse>> = safeApiCall {
+        client.get("$transactionUrl/accounts") {
+            addAuthHeader()
+        }.body()
+    }
+
+    suspend fun fetchAccount(id: Int): Result<AccountResponse> = safeApiCall {
+        client.get("$transactionUrl/accounts/$id") {
+            addAuthHeader()
+        }.body()
+    }
+
+    suspend fun createAccount(request: CreateAccountRequest): Result<AccountResponse> = safeApiCall {
+        client.post("$transactionUrl/accounts") {
+            addAuthHeader()
+            setBody(request)
+        }.body()
+    }
+
+    suspend fun updateAccount(id: Int, request: UpdateAccountRequest): Result<AccountResponse> = safeApiCall {
+        client.put("$transactionUrl/accounts/$id") {
+            addAuthHeader()
+            setBody(request)
+        }.body()
+    }
+
+    suspend fun deleteAccount(id: Int): Result<Unit> = safeApiCall {
+        client.delete("$transactionUrl/accounts/$id") {
+            addAuthHeader()
+        }
+    }
+
+    // Transactions
     suspend fun fetchTransactions(): Result<List<TransactionResponse>> = safeApiCall {
         client.get("$transactionUrl/transactions") {
             addAuthHeader()
         }.body()
     }
 
-    suspend fun postTransaction(request: TransactionRequest): Result<Unit> = safeApiCall {
-        client.post("$transactionUrl/transactions") {
+    suspend fun fetchTransactionsByAccount(accountId: Int): Result<List<TransactionResponse>> = safeApiCall {
+        client.get("$transactionUrl/transactions") {
             addAuthHeader()
-            setBody(request)
-        }
+            parameter("account_id", accountId)
+        }.body()
     }
 
-    suspend fun login(request: LoginRequest): Result<LoginResponse> = safeApiCall {
-        client.post("$userUrl/auth/login") {
+    suspend fun createTransaction(request: CreateTransactionRequest): Result<TransactionResponse> = safeApiCall {
+        client.post("$transactionUrl/transactions") {
+            addAuthHeader()
             setBody(request)
         }.body()
     }

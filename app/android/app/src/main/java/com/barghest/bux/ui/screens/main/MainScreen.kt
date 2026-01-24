@@ -1,7 +1,9 @@
 package com.barghest.bux.ui.screens.main
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -12,11 +14,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.barghest.bux.domain.model.Account
 import com.barghest.bux.domain.model.Transaction
+import com.barghest.bux.domain.model.TransactionType
+import com.barghest.bux.ui.screens.accounts.formatMoney
+import com.barghest.bux.ui.screens.accounts.icon
 import org.koin.androidx.compose.koinViewModel
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,33 +62,13 @@ fun MainScreen(
                 .padding(padding)
         ) {
             when (val currentState = state) {
-                is TransactionListState.Loading -> {
+                is MainScreenState.Loading -> {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
 
-                is TransactionListState.Empty -> {
-                    Column(
-                        modifier = Modifier.align(Alignment.Center),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Пока нет записей",
-                            style = MaterialTheme.typography.bodyLarge,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Нажмите + чтобы добавить первую транзакцию",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-
-                is TransactionListState.Error -> {
+                is MainScreenState.Error -> {
                     Column(
                         modifier = Modifier
                             .align(Alignment.Center)
@@ -104,18 +94,12 @@ fun MainScreen(
                     }
                 }
 
-                is TransactionListState.Success -> {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(vertical = 16.dp)
-                    ) {
-                        items(currentState.transactions) { transaction ->
-                            TransactionItem(transaction = transaction)
-                        }
-                    }
+                is MainScreenState.Success -> {
+                    MainContent(
+                        accounts = currentState.accounts,
+                        transactions = currentState.recentTransactions,
+                        navController = navController
+                    )
                 }
             }
         }
@@ -123,9 +107,141 @@ fun MainScreen(
 }
 
 @Composable
-private fun TransactionItem(transaction: Transaction) {
+private fun MainContent(
+    accounts: List<Account>,
+    transactions: List<Transaction>,
+    navController: NavController
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(vertical = 16.dp)
+    ) {
+        // Accounts section
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Счета",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                TextButton(onClick = { navController.navigate("accounts") }) {
+                    Text("Все")
+                }
+            }
+        }
+
+        item {
+            if (accounts.isEmpty()) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .clickable { navController.navigate("add_account") }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.AccountBalanceWallet,
+                            contentDescription = null,
+                            modifier = Modifier.size(40.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text("Добавьте первый счет")
+                    }
+                }
+            } else {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp)
+                ) {
+                    items(accounts) { account ->
+                        AccountMiniCard(account = account)
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+
+        // Transactions section
+        item {
+            Text(
+                text = "Последние операции",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        if (transactions.isEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                ) {
+                    Text(
+                        text = "Нет операций",
+                        modifier = Modifier.padding(16.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        } else {
+            items(transactions) { transaction ->
+                TransactionItem(transaction = transaction)
+            }
+        }
+    }
+}
+
+@Composable
+private fun AccountMiniCard(account: Account) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.width(160.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
+            Icon(
+                imageVector = account.type.icon(),
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = account.name,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1
+            )
+            Text(
+                text = formatMoney(account.balance.toDouble(), account.currency),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+private fun TransactionItem(transaction: Transaction) {
+    val dateFormatter = DateTimeFormatter.ofPattern("dd MMM HH:mm")
+        .withZone(ZoneId.systemDefault())
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
     ) {
         Row(
             modifier = Modifier
@@ -134,10 +250,33 @@ private fun TransactionItem(transaction: Transaction) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Column {
+                Text(
+                    text = transaction.description ?: transaction.type.displayName(),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = dateFormatter.format(transaction.transactionDate),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             Text(
-                text = "${transaction.amount} RUB",
-                style = MaterialTheme.typography.titleMedium
+                text = "${if (transaction.type == TransactionType.INCOME) "+" else "-"}${formatMoney(transaction.amount.toDouble(), transaction.currency)}",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = if (transaction.type == TransactionType.INCOME) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.error
+                }
             )
         }
     }
+}
+
+private fun TransactionType.displayName(): String = when (this) {
+    TransactionType.INCOME -> "Доход"
+    TransactionType.EXPENSE -> "Расход"
+    TransactionType.TRANSFER -> "Перевод"
 }

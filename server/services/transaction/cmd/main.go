@@ -32,14 +32,19 @@ func main() {
 		log.Error("Error in migration", sl.Err(err))
 	}
 
-	repo := repository.New(postgres)
-	service := service.New(repo)
+	// Account
+	accountRepo := repository.NewAccountRepository(postgres)
+	accountService := service.NewAccountService(accountRepo)
+
+	// Transaction (with account repo for balance updates)
+	txRepo := repository.New(postgres)
+	txService := service.NewWithAccountRepo(txRepo, accountRepo)
 
 	r := gin.Default()
-	http.New(r, service)
+	http.New(r, txService)
+	http.NewAccountHTTP(r, accountService)
 
 	if err := r.Run(fmt.Sprintf(":%d", cfg.HTTPServer.Port)); err != nil {
 		log.Error("Unable to start the server: ", sl.Err(err))
 	}
-
 }
