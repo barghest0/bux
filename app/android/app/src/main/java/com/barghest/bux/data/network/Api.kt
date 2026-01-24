@@ -2,12 +2,15 @@ package com.barghest.bux.data.network
 
 import android.util.Log
 import com.barghest.bux.data.dto.AccountResponse
+import com.barghest.bux.data.dto.CategoryResponse
 import com.barghest.bux.data.dto.CreateAccountRequest
+import com.barghest.bux.data.dto.CreateCategoryRequest
 import com.barghest.bux.data.dto.CreateTransactionRequest
 import com.barghest.bux.data.dto.LoginRequest
 import com.barghest.bux.data.dto.LoginResponse
 import com.barghest.bux.data.dto.TransactionResponse
 import com.barghest.bux.data.dto.UpdateAccountRequest
+import com.barghest.bux.data.dto.UpdateCategoryRequest
 import com.barghest.bux.data.local.TokenManager
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -106,6 +109,40 @@ class Api(private val tokenManager: TokenManager) {
             addAuthHeader()
             setBody(request)
         }.body()
+    }
+
+    // Categories
+    suspend fun fetchCategories(): Result<List<CategoryResponse>> = safeApiCall {
+        client.get("$transactionUrl/categories") {
+            addAuthHeader()
+        }.body()
+    }
+
+    suspend fun fetchCategoriesByType(type: String): Result<List<CategoryResponse>> = safeApiCall {
+        client.get("$transactionUrl/categories") {
+            addAuthHeader()
+            parameter("type", type)
+        }.body()
+    }
+
+    suspend fun createCategory(request: CreateCategoryRequest): Result<CategoryResponse> = safeApiCall {
+        client.post("$transactionUrl/categories") {
+            addAuthHeader()
+            setBody(request)
+        }.body()
+    }
+
+    suspend fun updateCategory(id: Int, request: UpdateCategoryRequest): Result<CategoryResponse> = safeApiCall {
+        client.put("$transactionUrl/categories/$id") {
+            addAuthHeader()
+            setBody(request)
+        }.body()
+    }
+
+    suspend fun deleteCategory(id: Int): Result<Unit> = safeApiCall {
+        client.delete("$transactionUrl/categories/$id") {
+            addAuthHeader()
+        }
     }
 
     private suspend inline fun <T> safeApiCall(crossinline block: suspend () -> T): Result<T> {

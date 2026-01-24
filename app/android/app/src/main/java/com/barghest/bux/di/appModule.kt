@@ -5,6 +5,7 @@ import com.barghest.bux.data.local.TokenManager
 import com.barghest.bux.data.network.Api
 import com.barghest.bux.data.repository.AccountRepository
 import com.barghest.bux.data.repository.AuthRepository
+import com.barghest.bux.data.repository.CategoryRepository
 import com.barghest.bux.data.repository.TransactionRepository
 import com.barghest.bux.domain.service.AuthService
 import com.barghest.bux.domain.service.TransactionService
@@ -23,6 +24,7 @@ val appModule = module {
     single { BuxDatabase.getDatabase(androidContext()) }
     single { get<BuxDatabase>().accountDao() }
     single { get<BuxDatabase>().transactionDao() }
+    single { get<BuxDatabase>().categoryDao() }
 
     // Network
     single { Api(get()) }
@@ -33,6 +35,7 @@ val appModule = module {
     // Repositories
     single { AccountRepository(get(), get(), get()) }
     single { TransactionRepository(get(), get(), get()) }
+    single { CategoryRepository(get(), get(), get()) }
     single { AuthRepository(get(), get()) }
 
     // Services
