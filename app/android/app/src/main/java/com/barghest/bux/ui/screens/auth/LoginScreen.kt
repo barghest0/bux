@@ -34,7 +34,7 @@ fun LoginScreen(
     // Navigate to main screen when logged in
     LaunchedEffect(state.isLoggedIn) {
         if (state.isLoggedIn) {
-            navController.navigate(Screen.Main.route) {
+            navController.navigate(Screen.Analytics.route) {
                 popUpTo(Screen.Login.route) { inclusive = true }
             }
         }

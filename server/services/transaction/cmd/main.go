@@ -44,10 +44,19 @@ func main() {
 	txRepo := repository.New(postgres)
 	txService := service.NewWithAccountRepo(txRepo, accountRepo)
 
+	// Analytics
+	analyticsService := service.NewAnalyticsService(txRepo)
+
+	// Budget
+	budgetRepo := repository.NewBudgetRepository(postgres)
+	budgetService := service.NewBudgetService(budgetRepo)
+
 	r := gin.Default()
 	http.New(r, txService)
 	http.NewAccountHTTP(r, accountService)
 	http.NewCategoryHTTP(r, categoryService)
+	http.NewAnalyticsHTTP(r, analyticsService)
+	http.NewBudgetHTTP(r, budgetService)
 
 	if err := r.Run(fmt.Sprintf(":%d", cfg.HTTPServer.Port)); err != nil {
 		log.Error("Unable to start the server: ", sl.Err(err))

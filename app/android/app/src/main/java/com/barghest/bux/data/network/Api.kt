@@ -4,12 +4,16 @@ import android.util.Log
 import com.barghest.bux.data.dto.AccountResponse
 import com.barghest.bux.data.dto.BrokerResponse
 import com.barghest.bux.data.dto.CategoryResponse
+import com.barghest.bux.data.dto.BudgetResponse
+import com.barghest.bux.data.dto.BudgetStatusResponse
 import com.barghest.bux.data.dto.CreateAccountRequest
+import com.barghest.bux.data.dto.CreateBudgetRequest
 import com.barghest.bux.data.dto.CreateBrokerRequest
 import com.barghest.bux.data.dto.CreateCategoryRequest
 import com.barghest.bux.data.dto.CreatePortfolioRequest
 import com.barghest.bux.data.dto.CreateTradeRequest
 import com.barghest.bux.data.dto.CreateTransactionRequest
+import com.barghest.bux.data.dto.TransactionSummaryResponse as SummaryResponse
 import com.barghest.bux.data.dto.LoginRequest
 import com.barghest.bux.data.dto.LoginResponse
 import com.barghest.bux.data.dto.PortfolioResponse
@@ -118,6 +122,41 @@ class Api(private val tokenManager: TokenManager) {
             addAuthHeader()
             setBody(request)
         }.body()
+    }
+
+    // Analytics
+    suspend fun fetchTransactionSummary(from: String? = null, to: String? = null): Result<SummaryResponse> = safeApiCall {
+        client.get("$transactionUrl/analytics/summary") {
+            addAuthHeader()
+            from?.let { parameter("from", it) }
+            to?.let { parameter("to", it) }
+        }.body()
+    }
+
+    // Budgets
+    suspend fun fetchBudgets(): Result<List<BudgetResponse>> = safeApiCall {
+        client.get("$transactionUrl/budgets") {
+            addAuthHeader()
+        }.body()
+    }
+
+    suspend fun fetchBudgetStatus(): Result<List<BudgetStatusResponse>> = safeApiCall {
+        client.get("$transactionUrl/budgets/status") {
+            addAuthHeader()
+        }.body()
+    }
+
+    suspend fun createBudget(request: CreateBudgetRequest): Result<BudgetResponse> = safeApiCall {
+        client.post("$transactionUrl/budgets") {
+            addAuthHeader()
+            setBody(request)
+        }.body()
+    }
+
+    suspend fun deleteBudget(id: Int): Result<Unit> = safeApiCall {
+        client.delete("$transactionUrl/budgets/$id") {
+            addAuthHeader()
+        }
     }
 
     // Categories
