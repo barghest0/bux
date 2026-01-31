@@ -11,6 +11,7 @@ import com.barghest.bux.ui.screens.main.MainScreen
 import com.barghest.bux.ui.screens.transaction.add.AddTransactionScreen
 import com.barghest.bux.ui.screens.categories.CategoriesScreen
 import com.barghest.bux.ui.screens.categories.AddCategoryScreen
+import com.barghest.bux.ui.screens.categories.EditCategoryScreen
 import com.barghest.bux.ui.screens.investments.AddTradeScreen
 import com.barghest.bux.ui.screens.investments.PortfolioDetailScreen
 import com.barghest.bux.ui.screens.investments.PortfoliosScreen
@@ -31,6 +32,7 @@ sealed class Screen(val route: String) {
     data object AddAccount : Screen("add_account")
     data object Categories : Screen("categories")
     data object AddCategory : Screen("add_category")
+    data object EditCategory : Screen("edit_category/{categoryId}")
     data object Portfolios : Screen("portfolios")
     data object PortfolioDetail : Screen("portfolio/{portfolioId}")
     data object AddTrade : Screen("add_trade/{portfolioId}")
@@ -71,6 +73,13 @@ fun NavigationGraph(navController: NavHostController) {
         }
         composable(Screen.AddCategory.route) {
             AddCategoryScreen(navController)
+        }
+        composable(
+            route = Screen.EditCategory.route,
+            arguments = listOf(navArgument("categoryId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val categoryId = backStackEntry.arguments?.getInt("categoryId") ?: 0
+            EditCategoryScreen(navController, categoryId)
         }
         composable(Screen.Portfolios.route) {
             PortfoliosScreen(navController)

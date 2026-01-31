@@ -16,6 +16,7 @@ import android.content.Intent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.AccountBalanceWallet
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import androidx.compose.ui.text.font.FontWeight
@@ -30,6 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.barghest.bux.domain.model.Account
+import com.barghest.bux.domain.model.Category
 import com.barghest.bux.domain.model.Transaction
 import com.barghest.bux.domain.model.TransactionType
 import com.barghest.bux.ui.application.navigation.Screen
@@ -38,6 +41,9 @@ import com.barghest.bux.ui.screens.accounts.icon
 import org.koin.androidx.compose.koinViewModel
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,6 +56,7 @@ fun MainScreen(
     val exportState by viewModel.exportState.collectAsState()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    var showFilterDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(exportState) {
         when (val es = exportState) {
@@ -80,6 +87,9 @@ fun MainScreen(
             TopAppBar(
                 title = { Text("Мои финансы") },
                 actions = {
+                    IconButton(onClick = { showFilterDialog = true }) {
+                        Icon(Icons.Default.FilterList, contentDescription = "Фильтры")
+                    }
                     IconButton(
                         onClick = { viewModel.exportCSV(context) },
                         enabled = exportState !is ExportState.Loading
@@ -149,7 +159,28 @@ fun MainScreen(
                         MainContent(
                             accounts = currentState.accounts,
                             transactions = currentState.recentTransactions,
+                            categories = currentState.categories,
+                            searchQuery = currentState.searchQuery,
+                            filters = currentState.filters,
+                            onSearchQueryChange = viewModel::updateSearchQuery,
+                            onClearFilters = viewModel::clearFilters,
                             navController = navController
+                        )
+                    }
+
+                    if (showFilterDialog) {
+                        FilterDialog(
+                            categories = currentState.categories,
+                            filters = currentState.filters,
+                            onDismiss = { showFilterDialog = false },
+                            onApply = { updated ->
+                                viewModel.updateFilters { updated }
+                                showFilterDialog = false
+                            },
+                            onClear = {
+                                viewModel.clearFilters()
+                                showFilterDialog = false
+                            }
                         )
                     }
                 }
@@ -162,12 +193,41 @@ fun MainScreen(
 private fun MainContent(
     accounts: List<Account>,
     transactions: List<Transaction>,
+    categories: List<Category>,
+    searchQuery: String,
+    filters: TransactionFilterState,
+    onSearchQueryChange: (String) -> Unit,
+    onClearFilters: () -> Unit,
     navController: NavController
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 16.dp)
     ) {
+        item {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            ) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = onSearchQueryChange,
+                    label = { Text("Поиск по описанию") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                if (filters.isActive()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    TextButton(onClick = onClearFilters) {
+                        Text("Сбросить фильтры")
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
         // Accounts section
         item {
             Row(
@@ -418,4 +478,140 @@ private fun TransactionType.displayName(): String = when (this) {
     TransactionType.INCOME -> "Доход"
     TransactionType.EXPENSE -> "Расход"
     TransactionType.TRANSFER -> "Перевод"
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FilterDialog(
+    categories: List<Category>,
+    filters: TransactionFilterState,
+    onDismiss: () -> Unit,
+    onApply: (TransactionFilterState) -> Unit,
+    onClear: () -> Unit
+) {
+    var localFilters by remember(filters) { mutableStateOf(filters) }
+    var categoryMenuExpanded by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Фильтры") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Тип")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(
+                        selected = localFilters.type == null,
+                        onClick = { localFilters = localFilters.copy(type = null) },
+                        label = { Text("Все") }
+                    )
+                    FilterChip(
+                        selected = localFilters.type == TransactionType.INCOME,
+                        onClick = { localFilters = localFilters.copy(type = TransactionType.INCOME) },
+                        label = { Text("Доход") }
+                    )
+                    FilterChip(
+                        selected = localFilters.type == TransactionType.EXPENSE,
+                        onClick = { localFilters = localFilters.copy(type = TransactionType.EXPENSE) },
+                        label = { Text("Расход") }
+                    )
+                    FilterChip(
+                        selected = localFilters.type == TransactionType.TRANSFER,
+                        onClick = { localFilters = localFilters.copy(type = TransactionType.TRANSFER) },
+                        label = { Text("Перевод") }
+                    )
+                }
+
+                val selectedCategory = categories.firstOrNull { it.id == localFilters.categoryId }
+                Box {
+                    OutlinedTextField(
+                        value = selectedCategory?.name ?: "Все категории",
+                        onValueChange = {},
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { categoryMenuExpanded = true },
+                        readOnly = true,
+                        label = { Text("Категория") }
+                    )
+                    DropdownMenu(
+                        expanded = categoryMenuExpanded,
+                        onDismissRequest = { categoryMenuExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Все категории") },
+                            onClick = {
+                                localFilters = localFilters.copy(categoryId = null)
+                                categoryMenuExpanded = false
+                            }
+                        )
+                        categories.forEach { category ->
+                            DropdownMenuItem(
+                                text = { Text(category.name) },
+                                onClick = {
+                                    localFilters = localFilters.copy(categoryId = category.id)
+                                    categoryMenuExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Text("Дата (YYYY-MM-DD)")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = localFilters.fromDate,
+                        onValueChange = { localFilters = localFilters.copy(fromDate = it) },
+                        label = { Text("С") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = localFilters.toDate,
+                        onValueChange = { localFilters = localFilters.copy(toDate = it) },
+                        label = { Text("По") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
+                }
+
+                Text("Сумма")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = localFilters.minAmount,
+                        onValueChange = { localFilters = localFilters.copy(minAmount = it) },
+                        label = { Text("От") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                    OutlinedTextField(
+                        value = localFilters.maxAmount,
+                        onValueChange = { localFilters = localFilters.copy(maxAmount = it) },
+                        label = { Text("До") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onApply(localFilters) }) {
+                Text("Применить")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onClear) {
+                Text("Сбросить")
+            }
+        }
+    )
+}
+
+private fun TransactionFilterState.isActive(): Boolean {
+    return type != null ||
+        categoryId != null ||
+        fromDate.isNotBlank() ||
+        toDate.isNotBlank() ||
+        minAmount.isNotBlank() ||
+        maxAmount.isNotBlank()
 }

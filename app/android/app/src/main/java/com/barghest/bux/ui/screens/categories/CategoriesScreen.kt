@@ -33,12 +33,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,7 +52,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.barghest.bux.domain.model.Category
 import com.barghest.bux.domain.model.CategoryType
+import com.barghest.bux.ui.application.navigation.Screen
 import org.koin.androidx.compose.koinViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,6 +65,8 @@ fun CategoriesScreen(
     val state by viewModel.state.collectAsState()
     val selectedType by viewModel.selectedType.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -68,7 +76,8 @@ fun CategoriesScreen(
             FloatingActionButton(onClick = { navController.navigate("add_category") }) {
                 Icon(Icons.Default.Add, contentDescription = "Добавить категорию")
             }
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -180,7 +189,16 @@ fun CategoriesScreen(
                             } else {
                                 CategoriesList(
                                     categories = filteredCategories,
-                                    onCategoryClick = { /* TODO: Edit category */ },
+                                    onCategoryClick = { category ->
+                                        if (category.isSystem) {
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar("Системные категории нельзя редактировать")
+                                            }
+                                        } else {
+                                            val route = Screen.EditCategory.route.replace("{categoryId}", category.id.toString())
+                                            navController.navigate(route)
+                                        }
+                                    },
                                     onDeleteClick = { category ->
                                         if (!category.isSystem) {
                                             viewModel.deleteCategory(category.id)

@@ -18,6 +18,7 @@ import com.barghest.bux.ui.screens.accounts.AccountsViewModel
 import com.barghest.bux.ui.screens.accounts.AddAccountViewModel
 import com.barghest.bux.ui.screens.auth.LoginViewModel
 import com.barghest.bux.ui.screens.categories.AddCategoryViewModel
+import com.barghest.bux.ui.screens.categories.EditCategoryViewModel
 import com.barghest.bux.ui.screens.categories.CategoriesViewModel
 import com.barghest.bux.ui.screens.investments.AddTradeViewModel
 import com.barghest.bux.ui.screens.investments.PortfolioDetailViewModel
@@ -65,13 +66,14 @@ val appModule = module {
     single { AuthService(get()) }
 
     // ViewModels
-    viewModel { MainViewModel(get(), get()) }
+    viewModel { MainViewModel(get(), get(), get()) }
     viewModel { LoginViewModel(get(), get()) }
     viewModel { AddTransactionViewModel(get(), get(), get()) }
     viewModel { AccountsViewModel(get()) }
     viewModel { AddAccountViewModel(get()) }
     viewModel { CategoriesViewModel(get()) }
     viewModel { AddCategoryViewModel(get()) }
+    viewModel { EditCategoryViewModel(get()) }
     viewModel { PortfoliosViewModel(get()) }
     viewModel { PortfolioDetailViewModel(get(), get()) }
     viewModel { AddTradeViewModel(get(), get()) }
