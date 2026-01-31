@@ -35,6 +35,7 @@ import com.barghest.bux.domain.model.ThemeMode
 import com.barghest.bux.ui.application.navigation.Screen
 import org.koin.androidx.compose.get
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     navController: NavController
