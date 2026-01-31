@@ -23,4 +23,8 @@ class TransactionService(
     suspend fun createTransaction(transaction: NewTransaction): Result<Transaction> {
         return repository.createTransaction(transaction)
     }
+
+    suspend fun exportCSV(): Result<ByteArray> {
+        return repository.exportCSV()
+    }
 }

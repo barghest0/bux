@@ -8,6 +8,7 @@ import com.barghest.bux.data.repository.AuthRepository
 import com.barghest.bux.data.repository.CategoryRepository
 import com.barghest.bux.data.repository.AnalyticsRepository
 import com.barghest.bux.data.repository.InvestmentRepository
+import com.barghest.bux.data.repository.BudgetRepository
 import com.barghest.bux.data.repository.TransactionRepository
 import com.barghest.bux.data.sync.SyncManager
 import com.barghest.bux.domain.service.AuthService
@@ -22,6 +23,8 @@ import com.barghest.bux.ui.screens.investments.PortfolioDetailViewModel
 import com.barghest.bux.ui.screens.investments.PortfoliosViewModel
 import com.barghest.bux.ui.screens.analytics.AnalyticsDashboardViewModel
 import com.barghest.bux.ui.screens.analytics.NetWorthViewModel
+import com.barghest.bux.ui.screens.budgets.AddBudgetViewModel
+import com.barghest.bux.ui.screens.budgets.BudgetsViewModel
 import com.barghest.bux.ui.screens.main.MainViewModel
 import com.barghest.bux.ui.screens.transaction.add.AddTransactionViewModel
 import org.koin.android.ext.koin.androidContext
@@ -49,6 +52,7 @@ val appModule = module {
     single { AuthRepository(get(), get()) }
     single { InvestmentRepository(get(), get()) }
     single { AnalyticsRepository(get(), get(), get()) }
+    single { BudgetRepository(get()) }
 
     // Sync
     single { SyncManager(get(), get(), get()) }
@@ -70,4 +74,6 @@ val appModule = module {
     viewModel { AddTradeViewModel(get(), get()) }
     viewModel { AnalyticsDashboardViewModel(get(), get(), get()) }
     viewModel { NetWorthViewModel(get()) }
+    viewModel { BudgetsViewModel(get()) }
+    viewModel { AddBudgetViewModel(get(), get()) }
 }

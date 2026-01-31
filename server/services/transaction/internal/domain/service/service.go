@@ -52,12 +52,28 @@ func (s *TransactionService) GetTransactionsByUser(userID uint) ([]model.Transac
 	return transactions, nil
 }
 
+func (s *TransactionService) GetTransactionsByUserPaginated(userID uint, limit, offset int) ([]model.Transaction, int64, error) {
+	txs, count, err := s.repo.GetByUserIDPaginated(userID, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("get transactions by user paginated: %w", err)
+	}
+	return txs, count, nil
+}
+
 func (s *TransactionService) GetTransactionsByAccount(accountID, userID uint) ([]model.Transaction, error) {
 	transactions, err := s.repo.GetByAccountID(accountID, userID)
 	if err != nil {
 		return nil, fmt.Errorf("get transactions by account: %w", err)
 	}
 	return transactions, nil
+}
+
+func (s *TransactionService) GetTransactionsByAccountPaginated(accountID, userID uint, limit, offset int) ([]model.Transaction, int64, error) {
+	txs, count, err := s.repo.GetByAccountIDPaginated(accountID, userID, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("get transactions by account paginated: %w", err)
+	}
+	return txs, count, nil
 }
 
 func (s *TransactionService) GetTransaction(id uint) (*model.Transaction, error) {

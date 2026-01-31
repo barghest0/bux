@@ -441,37 +441,63 @@ private fun LegendItem(color: Color, label: String) {
 
 @Composable
 private fun QuickActions(navController: NavController) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Card(
-            modifier = Modifier
-                .weight(1f)
-                .clickable { navController.navigate("categories") }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
+            Card(
                 modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                    .weight(1f)
+                    .clickable { navController.navigate("categories") }
             ) {
-                Icon(
-                    Icons.Default.Category,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Категории", style = MaterialTheme.typography.bodyMedium)
+                Row(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Category,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Категории", style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+            Card(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { navController.navigate("portfolios") }
+            ) {
+                Row(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.ShowChart,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Портфели", style = MaterialTheme.typography.bodyMedium)
+                }
             }
         }
         Card(
             modifier = Modifier
-                .weight(1f)
-                .clickable { navController.navigate("portfolios") }
+                .fillMaxWidth()
+                .clickable { navController.navigate("budgets") }
         ) {
             Row(
                 modifier = Modifier
@@ -480,13 +506,13 @@ private fun QuickActions(navController: NavController) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    Icons.Default.ShowChart,
+                    Icons.Default.AccountBalance,
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Портфели", style = MaterialTheme.typography.bodyMedium)
+                Text("Бюджеты", style = MaterialTheme.typography.bodyMedium)
             }
         }
     }

@@ -19,7 +19,7 @@ Phase 1: Core Domain Model         ✅ ЗАВЕРШЕНО (2026-01-24)
     ↓
 Phase 2: Investments & Assets      ✅ ЗАВЕРШЕНО (2026-01-24)
     ↓
-Phase 3: Analytics & Scale         ← СЛЕДУЮЩАЯ
+Phase 3: Analytics & Scale         ✅ ЗАВЕРШЕНО (2026-01-31)
 ```
 
 ## Быстрый старт
@@ -72,15 +72,18 @@ Phase 3: Analytics & Scale         ← СЛЕДУЮЩАЯ
 | PortfolioDetailScreen с holdings | DONE |
 | AddTradeScreen | DONE |
 
-## Phase 3: Следующие задачи
+## Phase 3: Analytics & Scale (ЗАВЕРШЕНО)
 
-| Задача | Приоритет |
-|--------|-----------|
-| Analytics dashboard | HIGH |
-| Net Worth calculation | HIGH |
-| Reports и графики | MEDIUM |
-| Budget tracking | MEDIUM |
-| Export данных | LOW |
+| Задача | Статус |
+|--------|--------|
+| Backend: Transaction Summary endpoint | DONE |
+| Android: Vico charts + domain models | DONE |
+| Android: AnalyticsRepository + API | DONE |
+| Android: Analytics Dashboard Screen | DONE |
+| Android: Net Worth Screen | DONE |
+| Backend + Android: Budget Tracking | DONE |
+| Backend: Pagination (transactions, trades) | DONE |
+| Backend + Android: CSV Export | DONE |
 
 ## Контакты
 

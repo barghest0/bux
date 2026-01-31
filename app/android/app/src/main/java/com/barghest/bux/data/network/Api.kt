@@ -262,6 +262,15 @@ class Api(private val tokenManager: TokenManager) {
         }.body()
     }
 
+    // Export
+    suspend fun exportTransactionsCSV(from: String? = null, to: String? = null): Result<ByteArray> = safeApiCall {
+        client.get("$transactionUrl/transactions/export") {
+            addAuthHeader()
+            from?.let { parameter("from", it) }
+            to?.let { parameter("to", it) }
+        }.body<ByteArray>()
+    }
+
     private suspend inline fun <T> safeApiCall(crossinline block: suspend () -> T): Result<T> {
         return withContext(Dispatchers.IO) {
             try {

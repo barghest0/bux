@@ -54,6 +54,25 @@ func (r *TransactionRepository) GetByUserID(userID uint) ([]model.Transaction, e
 	return txs, nil
 }
 
+func (r *TransactionRepository) GetByUserIDPaginated(userID uint, limit, offset int) ([]model.Transaction, int64, error) {
+	var txs []model.Transaction
+	var count int64
+
+	q := r.db.Model(&model.Transaction{}).Where("user_id = ?", userID)
+	if err := q.Count(&count).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := r.db.Preload("Category").
+		Where("user_id = ?", userID).
+		Order("transaction_date DESC").
+		Limit(limit).Offset(offset).
+		Find(&txs).Error; err != nil {
+		return nil, 0, err
+	}
+	return txs, count, nil
+}
+
 func (r *TransactionRepository) GetByAccountID(accountID, userID uint) ([]model.Transaction, error) {
 	var txs []model.Transaction
 	if err := r.db.Preload("Category").
@@ -63,6 +82,26 @@ func (r *TransactionRepository) GetByAccountID(accountID, userID uint) ([]model.
 		return nil, err
 	}
 	return txs, nil
+}
+
+func (r *TransactionRepository) GetByAccountIDPaginated(accountID, userID uint, limit, offset int) ([]model.Transaction, int64, error) {
+	var txs []model.Transaction
+	var count int64
+
+	q := r.db.Model(&model.Transaction{}).
+		Where("(account_id = ? OR destination_account_id = ?) AND user_id = ?", accountID, accountID, userID)
+	if err := q.Count(&count).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := r.db.Preload("Category").
+		Where("(account_id = ? OR destination_account_id = ?) AND user_id = ?", accountID, accountID, userID).
+		Order("transaction_date DESC").
+		Limit(limit).Offset(offset).
+		Find(&txs).Error; err != nil {
+		return nil, 0, err
+	}
+	return txs, count, nil
 }
 
 func (r *TransactionRepository) Update(tx *model.Transaction) (*model.Transaction, error) {

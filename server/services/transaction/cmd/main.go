@@ -57,6 +57,7 @@ func main() {
 	http.NewCategoryHTTP(r, categoryService)
 	http.NewAnalyticsHTTP(r, analyticsService)
 	http.NewBudgetHTTP(r, budgetService)
+	http.NewExportHTTP(r, txService)
 
 	if err := r.Run(fmt.Sprintf(":%d", cfg.HTTPServer.Port)); err != nil {
 		log.Error("Unable to start the server: ", sl.Err(err))

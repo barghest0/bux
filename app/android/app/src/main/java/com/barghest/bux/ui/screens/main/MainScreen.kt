@@ -12,12 +12,18 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import android.content.Intent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.ShowChart
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.FileProvider
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -39,18 +45,52 @@ fun MainScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val exportState by viewModel.exportState.collectAsState()
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(exportState) {
+        when (val es = exportState) {
+            is ExportState.Success -> {
+                val uri = FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    es.file
+                )
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/csv"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                context.startActivity(Intent.createChooser(intent, "Экспорт транзакций"))
+                viewModel.resetExportState()
+            }
+            is ExportState.Error -> {
+                snackbarHostState.showSnackbar(es.message)
+                viewModel.resetExportState()
+            }
+            else -> {}
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Мои финансы") },
                 actions = {
+                    IconButton(
+                        onClick = { viewModel.exportCSV(context) },
+                        enabled = exportState !is ExportState.Loading
+                    ) {
+                        Icon(Icons.Default.FileDownload, contentDescription = "Экспорт CSV")
+                    }
                     IconButton(onClick = { viewModel.refresh() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Обновить")
                     }
                 }
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { navController.navigate("add_transaction") },

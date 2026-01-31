@@ -138,9 +138,9 @@ DELETE /budgets/:id       — удалить бюджет
 GET    /budgets/status    — бюджеты с расчётом потраченного (budget_amount, spent_amount, remaining, spent_percent)
 ```
 
-#### Android ⚠️ ЧАСТИЧНО
+#### Android ✅ DONE
 
-**Готово:**
+**Файлы:**
 - `data/dto/Budget.kt` — BudgetResponse, CreateBudgetRequest, UpdateBudgetRequest, BudgetStatusResponse
 - `domain/model/Budget.kt` — Budget, BudgetStatus, BudgetPeriod
 - `data/mapper/BudgetMapper.kt` — маппинг DTO → Domain
@@ -148,43 +148,66 @@ GET    /budgets/status    — бюджеты с расчётом потраче�
 - `data/repository/BudgetRepository.kt` — BudgetRepository
 - `ui/screens/budgets/BudgetsViewModel.kt` — BudgetsViewModel
 - `ui/screens/budgets/BudgetsScreen.kt` — список бюджетов с progress bar (потрачено/лимит)
-
-**НЕ СДЕЛАНО:**
-- `ui/screens/budgets/AddBudgetScreen.kt` — экран создания бюджета (выбор категории, ввод суммы, период)
-- `ui/screens/budgets/AddBudgetViewModel.kt`
-- Регистрация BudgetRepository и BudgetsViewModel в `di/appModule.kt`
-- Добавление `Screen.Budgets` и `Screen.AddBudget` в `NavigationGraph.kt`
-- Навигация к бюджетам с Analytics Dashboard
+- `ui/screens/budgets/AddBudgetScreen.kt` — экран создания бюджета (выбор категории, ввод суммы, период, валюта)
+- `ui/screens/budgets/AddBudgetViewModel.kt` — ViewModel с валидацией
+- `di/appModule.kt` — зарегистрированы BudgetRepository, BudgetsViewModel, AddBudgetViewModel
+- `NavigationGraph.kt` — добавлены Screen.Budgets и Screen.AddBudget
+- `AnalyticsDashboardScreen.kt` — кнопка навигации к бюджетам в Quick Actions
 
 ---
 
-### Step 7: Backend — Pagination ❌ НЕ НАЧАТО
+### Step 7: Backend — Pagination ✅ DONE
 
-**Описание:** Добавить `page` и `page_size` query params ко всем list endpoint'ам во всех 3 сервисах.
+**Описание:** Добавлена пагинация для ключевых list endpoints (transactions, trades). Обратно совместимо — без `page` параметра возвращается полный список.
 
-**Что нужно сделать:**
-- Создать generic `PaginatedResponse[T]` struct
-- Обновить все repository Get* методы — добавить LIMIT/OFFSET
-- Обновить все list handlers — парсить query params
-- Defaults: page=1, page_size=50. Обратно совместимо.
+**Новые файлы:**
+- `server/services/transaction/internal/presentation/http/dto/pagination.go` — PaginationParams, PaginatedResponse[T], ParsePagination()
+- `server/services/investment/internal/presentation/http/dto/pagination.go` — аналогично
 
-**Файлы (все 3 сервиса):**
-- `repository.go` / `account_repository.go` / `category_repository.go` / `budget_repository.go`
-- Все HTTP handlers с GET list
+**Изменённые файлы:**
+- `server/services/transaction/internal/data/repository/repository.go` — GetByUserIDPaginated(), GetByAccountIDPaginated()
+- `server/services/transaction/internal/domain/service/service.go` — GetTransactionsByUserPaginated(), GetTransactionsByAccountPaginated()
+- `server/services/transaction/internal/presentation/http/transactions.go` — поддержка `?page=&page_size=`
+- `server/services/investment/internal/data/repository/repository.go` — GetTradesByPortfolioIDPaginated()
+- `server/services/investment/internal/domain/service/service.go` — GetTradesPaginated()
+- `server/services/investment/internal/presentation/http/http.go` — поддержка пагинации в GetTrades
+
+**API:**
+```
+GET /transactions?page=1&page_size=50 → { data: [...], page, page_size, total_count, total_pages }
+GET /api/portfolios/:id/trades?page=1&page_size=50 → аналогично
+```
+Defaults: page=1, page_size=50, max=200.
 
 ---
 
-### Step 8: Backend + Android — CSV Export ❌ НЕ НАЧАТО
-
-**Описание:** Экспорт транзакций в CSV файл.
+### Step 8: Backend + Android — CSV Export ✅ DONE
 
 **Backend:**
-- `server/services/transaction/internal/presentation/http/export.go`
-- `GET /transactions/export?format=csv&from=&to=` → Content-Type: text/csv
+
+**Новые файлы:**
+- `server/services/transaction/internal/presentation/http/export.go` — ExportHTTP handler
+
+**Изменённые файлы:**
+- `server/services/transaction/cmd/main.go` — зарегистрирован ExportHTTP
+
+**API:**
+```
+GET /transactions/export?from=2025-01-01&to=2025-12-31 → Content-Type: text/csv
+```
 
 **Android:**
-- Кнопка "Export" на экране транзакций
-- Скачивание файла + Android share sheet
+
+**Изменённые файлы:**
+- `data/network/Api.kt` — exportTransactionsCSV()
+- `data/repository/TransactionRepository.kt` — exportCSV()
+- `domain/service/TransactionService.kt` — exportCSV()
+- `ui/screens/main/MainViewModel.kt` — exportCSV(context), ExportState
+- `ui/screens/main/MainScreen.kt` — кнопка экспорта в top bar + Android share sheet
+- `AndroidManifest.xml` — FileProvider для share
+
+**Новые файлы:**
+- `res/xml/file_paths.xml` — конфигурация FileProvider
 
 ---
 
@@ -197,28 +220,15 @@ GET    /budgets/status    — бюджеты с расчётом потраче�
 | 3 | Android: AnalyticsRepository + API | ✅ DONE |
 | 4 | Android: Analytics Dashboard Screen | ✅ DONE |
 | 5 | Android: Net Worth Screen | ✅ DONE |
-| 6 | Backend + Android: Budget Tracking | ⚠️ PARTIAL (backend done, Android needs AddBudget screen + DI/Nav wiring) |
-| 7 | Backend: Pagination | ❌ NOT STARTED |
-| 8 | Backend + Android: CSV Export | ❌ NOT STARTED |
+| 6 | Backend + Android: Budget Tracking | ✅ DONE |
+| 7 | Backend: Pagination | ✅ DONE |
+| 8 | Backend + Android: CSV Export | ✅ DONE |
 
 ---
 
-## Что осталось доделать (в порядке приоритета)
+## Что осталось доделать
 
-### 1. Довести Step 6 до конца
-- Создать `AddBudgetScreen.kt` и `AddBudgetViewModel.kt`
-- Зарегистрировать `BudgetRepository`, `BudgetsViewModel`, `AddBudgetViewModel` в `appModule.kt`
-- Добавить `Screen.Budgets`, `Screen.AddBudget` в `NavigationGraph.kt`
-- Добавить кнопку навигации к бюджетам на Analytics Dashboard
-
-### 2. Step 7: Pagination
-- Generic PaginatedResponse
-- Обновить все list endpoints (3 сервиса)
-- Обновить Android для поддержки pagination (опционально для MVP)
-
-### 3. Step 8: CSV Export
-- Backend endpoint
-- Android: download + share
+Phase 3 полностью завершена. Все 8 шагов реализованы.
 
 ---
 

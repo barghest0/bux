@@ -89,6 +89,19 @@ func (r *InvestmentRepository) GetTradesByPortfolioID(portfolioID uint) ([]model
 	return trades, err
 }
 
+func (r *InvestmentRepository) GetTradesByPortfolioIDPaginated(portfolioID uint, limit, offset int) ([]model.Trade, int64, error) {
+	var trades []model.Trade
+	var count int64
+
+	if err := r.db.Model(&model.Trade{}).Where("portfolio_id = ?", portfolioID).Count(&count).Error; err != nil {
+		return nil, 0, err
+	}
+
+	err := r.db.Preload("Security").Where("portfolio_id = ?", portfolioID).
+		Order("trade_date DESC").Limit(limit).Offset(offset).Find(&trades).Error
+	return trades, count, err
+}
+
 func (r *InvestmentRepository) GetTradesBySecurityID(portfolioID, securityID uint) ([]model.Trade, error) {
 	var trades []model.Trade
 	err := r.db.Where("portfolio_id = ? AND security_id = ?", portfolioID, securityID).

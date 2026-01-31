@@ -145,6 +145,18 @@ func (h *InvestmentHandler) GetTrades(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
+
+	if c.Query("page") != "" {
+		pg := dto.ParsePagination(c)
+		trades, total, err := h.service.GetTradesPaginated(uri.ID, pg.Limit(), pg.Offset())
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, dto.NewPaginatedResponse(trades, pg.Page, pg.PageSize, int(total)))
+		return
+	}
+
 	trades, err := h.service.GetTrades(uri.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

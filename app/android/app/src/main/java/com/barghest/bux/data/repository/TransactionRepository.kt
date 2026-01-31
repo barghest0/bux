@@ -45,6 +45,10 @@ class TransactionRepository(
         }
     }
 
+    suspend fun exportCSV(): Result<ByteArray> {
+        return api.exportTransactionsCSV()
+    }
+
     suspend fun createTransaction(transaction: NewTransaction): Result<Transaction> {
         return api.createTransaction(transaction.toRequest()).map { response ->
             val userId = userIdProvider()

@@ -144,6 +144,10 @@ func (s *InvestmentService) GetTrades(portfolioID uint) ([]model.Trade, error) {
 	return s.repo.GetTradesByPortfolioID(portfolioID)
 }
 
+func (s *InvestmentService) GetTradesPaginated(portfolioID uint, limit, offset int) ([]model.Trade, int64, error) {
+	return s.repo.GetTradesByPortfolioIDPaginated(portfolioID, limit, offset)
+}
+
 // Holding methods
 func (s *InvestmentService) recalculateHolding(portfolioID, securityID uint) error {
 	trades, err := s.repo.GetTradesBySecurityID(portfolioID, securityID)

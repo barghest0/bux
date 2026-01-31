@@ -16,6 +16,8 @@ import com.barghest.bux.ui.screens.investments.PortfolioDetailScreen
 import com.barghest.bux.ui.screens.investments.PortfoliosScreen
 import com.barghest.bux.ui.screens.analytics.AnalyticsDashboardScreen
 import com.barghest.bux.ui.screens.analytics.NetWorthScreen
+import com.barghest.bux.ui.screens.budgets.AddBudgetScreen
+import com.barghest.bux.ui.screens.budgets.BudgetsScreen
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 
@@ -32,6 +34,8 @@ sealed class Screen(val route: String) {
     data object AddTrade : Screen("add_trade/{portfolioId}")
     data object Analytics : Screen("analytics")
     data object NetWorth : Screen("net_worth")
+    data object Budgets : Screen("budgets")
+    data object AddBudget : Screen("add_budget")
 }
 
 @Composable
@@ -78,6 +82,12 @@ fun NavigationGraph(navController: NavHostController) {
             arguments = listOf(navArgument("portfolioId") { type = NavType.IntType })
         ) {
             AddTradeScreen(navController)
+        }
+        composable(Screen.Budgets.route) {
+            BudgetsScreen(navController)
+        }
+        composable(Screen.AddBudget.route) {
+            AddBudgetScreen(navController)
         }
     }
 }

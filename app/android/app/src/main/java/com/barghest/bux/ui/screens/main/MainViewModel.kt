@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import android.content.Context
+import java.io.File
 
 sealed interface MainScreenState {
     data object Loading : MainScreenState
@@ -33,6 +35,9 @@ class MainViewModel(
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    private val _exportState = MutableStateFlow<ExportState>(ExportState.Idle)
+    val exportState: StateFlow<ExportState> = _exportState.asStateFlow()
 
     init {
         observeData()
@@ -67,4 +72,30 @@ class MainViewModel(
             }
         }
     }
+
+    fun exportCSV(context: Context) {
+        viewModelScope.launch {
+            _exportState.value = ExportState.Loading
+            transactionService.exportCSV()
+                .onSuccess { bytes ->
+                    val file = File(context.cacheDir, "transactions.csv")
+                    file.writeBytes(bytes)
+                    _exportState.value = ExportState.Success(file)
+                }
+                .onFailure { e ->
+                    _exportState.value = ExportState.Error(e.message ?: "Export failed")
+                }
+        }
+    }
+
+    fun resetExportState() {
+        _exportState.value = ExportState.Idle
+    }
+}
+
+sealed interface ExportState {
+    data object Idle : ExportState
+    data object Loading : ExportState
+    data class Success(val file: File) : ExportState
+    data class Error(val message: String) : ExportState
 }

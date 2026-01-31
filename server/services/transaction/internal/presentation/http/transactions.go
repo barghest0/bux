@@ -36,6 +36,10 @@ func (h *TransactionHTTP) GetTransactions(ctx *gin.Context) {
 		return
 	}
 
+	// Check if pagination is requested
+	usePagination := ctx.Query("page") != ""
+	pg := dto.ParsePagination(ctx)
+
 	// Check for account_id query param
 	accountIDStr := ctx.Query("account_id")
 	if accountIDStr != "" {
@@ -44,12 +48,33 @@ func (h *TransactionHTTP) GetTransactions(ctx *gin.Context) {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid account_id"})
 			return
 		}
+
+		if usePagination {
+			transactions, total, err := h.service.GetTransactionsByAccountPaginated(uint(accountID), userID.(uint), pg.Limit(), pg.Offset())
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			ctx.JSON(http.StatusOK, dto.NewPaginatedResponse(dto.FromModelList(transactions), pg.Page, pg.PageSize, int(total)))
+			return
+		}
+
 		transactions, err := h.service.GetTransactionsByAccount(uint(accountID), userID.(uint))
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		ctx.JSON(http.StatusOK, dto.FromModelList(transactions))
+		return
+	}
+
+	if usePagination {
+		transactions, total, err := h.service.GetTransactionsByUserPaginated(userID.(uint), pg.Limit(), pg.Offset())
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		ctx.JSON(http.StatusOK, dto.NewPaginatedResponse(dto.FromModelList(transactions), pg.Page, pg.PageSize, int(total)))
 		return
 	}
 
