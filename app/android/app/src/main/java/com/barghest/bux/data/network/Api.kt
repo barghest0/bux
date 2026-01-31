@@ -53,9 +53,9 @@ class Api(private val tokenManager: TokenManager) {
         }
     }
 
-    private val transactionUrl = "http://10.0.2.2:8082"
-    private val userUrl = "http://10.0.2.2:8081"
-    private val investmentUrl = "http://10.0.2.2:8083"
+    private val transactionUrl = "http://192.168.3.3:8082"
+    private val userUrl = "http://192.168.3.3:8081"
+    private val investmentUrl = "http://192.168.3.3:8083"
 
     private fun HttpRequestBuilder.addAuthHeader() {
         tokenManager.getToken()?.let { token ->

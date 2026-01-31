@@ -15,13 +15,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.CurrencyBitcoin
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Savings
-import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -207,7 +207,7 @@ fun AccountType.icon(): ImageVector = when (this) {
     AccountType.CARD -> Icons.Default.CreditCard
     AccountType.CASH -> Icons.Default.Savings
     AccountType.CRYPTO -> Icons.Default.CurrencyBitcoin
-    AccountType.INVESTMENT -> Icons.Default.ShowChart
+    AccountType.INVESTMENT -> Icons.AutoMirrored.Filled.ShowChart
     AccountType.PROPERTY -> Icons.Default.Home
 }
 

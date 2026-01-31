@@ -14,9 +14,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.TrendingDown
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -250,7 +250,11 @@ fun PortfolioSummaryCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         val isProfit = summary.totalUnrealizedPnL >= BigDecimal.ZERO
                         Icon(
-                            imageVector = if (isProfit) Icons.Default.TrendingUp else Icons.Default.TrendingDown,
+                            imageVector = if (isProfit) {
+                                Icons.AutoMirrored.Filled.TrendingUp
+                            } else {
+                                Icons.AutoMirrored.Filled.TrendingDown
+                            },
                             contentDescription = null,
                             tint = if (isProfit) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                         )

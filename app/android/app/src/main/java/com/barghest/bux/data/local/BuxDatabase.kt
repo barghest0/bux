@@ -32,7 +32,7 @@ abstract class BuxDatabase : RoomDatabase() {
                     BuxDatabase::class.java,
                     "bux_database"
                 )
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration(true)
                     .build()
                 INSTANCE = instance
                 instance
