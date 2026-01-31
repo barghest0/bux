@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Button
@@ -21,6 +22,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -31,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.barghest.bux.data.local.PreferencesManager
 import com.barghest.bux.data.repository.AuthRepository
+import com.barghest.bux.domain.service.BiometricHelper
 import com.barghest.bux.domain.model.ThemeMode
 import com.barghest.bux.ui.application.navigation.Screen
 import org.koin.androidx.compose.get
@@ -42,7 +45,9 @@ fun SettingsScreen(
 ) {
     val preferencesManager: PreferencesManager = get()
     val authRepository: AuthRepository = get()
+    val biometricHelper: BiometricHelper = get()
     val themeMode by preferencesManager.themeMode.collectAsState()
+    val biometricEnabled by preferencesManager.biometricEnabled.collectAsState()
 
     Scaffold(
         topBar = {
@@ -100,6 +105,25 @@ fun SettingsScreen(
                 selectedMode = themeMode,
                 onSelect = preferencesManager::setThemeMode
             )
+
+            if (biometricHelper.canAuthenticate()) {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Безопасность",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                ListItem(
+                    headlineContent = { Text("Вход по биометрии") },
+                    leadingContent = { Icon(Icons.Default.Fingerprint, contentDescription = null) },
+                    trailingContent = {
+                        Switch(
+                            checked = biometricEnabled,
+                            onCheckedChange = { preferencesManager.setBiometricEnabled(it) }
+                        )
+                    }
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 

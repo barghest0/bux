@@ -12,6 +12,7 @@ func Migrate(db *gorm.DB) error {
 		&model.Category{},
 		&model.Transaction{},
 		&model.Budget{},
+		&model.RecurringTransaction{},
 	)
 
 	if err != nil {

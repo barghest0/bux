@@ -18,6 +18,16 @@ type MonthlySummary struct {
 	Net     string `json:"net"`
 }
 
+type TrendItem struct {
+	Year        int    `json:"year"`
+	Month       int    `json:"month"`
+	Income      string `json:"income"`
+	Expense     string `json:"expense"`
+	Net         string `json:"net"`
+	PrevIncome  string `json:"prev_income,omitempty"`
+	PrevExpense string `json:"prev_expense,omitempty"`
+}
+
 type TransactionSummaryResponse struct {
 	TotalIncome  string            `json:"total_income"`
 	TotalExpense string            `json:"total_expense"`

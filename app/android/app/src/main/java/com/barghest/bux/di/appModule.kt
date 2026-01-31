@@ -10,9 +10,11 @@ import com.barghest.bux.data.repository.CategoryRepository
 import com.barghest.bux.data.repository.AnalyticsRepository
 import com.barghest.bux.data.repository.InvestmentRepository
 import com.barghest.bux.data.repository.BudgetRepository
+import com.barghest.bux.data.repository.RecurringTransactionRepository
 import com.barghest.bux.data.repository.TransactionRepository
 import com.barghest.bux.data.sync.SyncManager
 import com.barghest.bux.domain.service.AuthService
+import com.barghest.bux.domain.service.BiometricHelper
 import com.barghest.bux.domain.service.TransactionService
 import com.barghest.bux.ui.screens.accounts.AccountsViewModel
 import com.barghest.bux.ui.screens.accounts.AddAccountViewModel
@@ -28,6 +30,9 @@ import com.barghest.bux.ui.screens.analytics.NetWorthViewModel
 import com.barghest.bux.ui.screens.budgets.AddBudgetViewModel
 import com.barghest.bux.ui.screens.budgets.BudgetsViewModel
 import com.barghest.bux.ui.screens.main.MainViewModel
+import com.barghest.bux.ui.screens.recurring.RecurringTransactionsViewModel
+import com.barghest.bux.ui.screens.insights.InsightsViewModel
+import com.barghest.bux.ui.screens.recurring.AddRecurringTransactionViewModel
 import com.barghest.bux.ui.screens.settings.ProfileEditViewModel
 import com.barghest.bux.ui.screens.transaction.add.AddTransactionViewModel
 import org.koin.android.ext.koin.androidContext
@@ -38,10 +43,12 @@ val appModule = module {
     // Local storage
     single { TokenManager(androidContext()) }
     single { PreferencesManager(androidContext()) }
+    single { BiometricHelper(androidContext()) }
     single { BuxDatabase.getDatabase(androidContext()) }
     single { get<BuxDatabase>().accountDao() }
     single { get<BuxDatabase>().transactionDao() }
     single { get<BuxDatabase>().categoryDao() }
+    single { get<BuxDatabase>().recurringTransactionDao() }
 
     // Network
     single { Api(get()) }
@@ -57,6 +64,7 @@ val appModule = module {
     single { InvestmentRepository(get()) }
     single { AnalyticsRepository(get(), get(), get()) }
     single { BudgetRepository(get()) }
+    single { RecurringTransactionRepository(get(), get(), get()) }
 
     // Sync
     single { SyncManager(get(), get(), get()) }
@@ -82,4 +90,7 @@ val appModule = module {
     viewModel { BudgetsViewModel(get()) }
     viewModel { AddBudgetViewModel(get(), get()) }
     viewModel { ProfileEditViewModel(get()) }
+    viewModel { RecurringTransactionsViewModel(get()) }
+    viewModel { AddRecurringTransactionViewModel(get(), get(), get()) }
+    viewModel { InsightsViewModel(get()) }
 }

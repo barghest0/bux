@@ -23,7 +23,11 @@ import com.barghest.bux.data.dto.PortfolioResponse
 import com.barghest.bux.data.dto.PortfolioSummaryResponse
 import com.barghest.bux.data.dto.SecurityResponse
 import com.barghest.bux.data.dto.TradeResponse
+import com.barghest.bux.data.dto.RecurringTransactionResponse
+import com.barghest.bux.data.dto.CreateRecurringTransactionRequest
+import com.barghest.bux.data.dto.TopCategoriesResponse
 import com.barghest.bux.data.dto.TransactionResponse
+import com.barghest.bux.data.dto.TrendsResponse
 import com.barghest.bux.data.dto.UpdateAccountRequest
 import com.barghest.bux.data.dto.UpdateCategoryRequest
 import com.barghest.bux.data.local.TokenManager
@@ -292,6 +296,55 @@ class Api(private val tokenManager: TokenManager) {
             from?.let { parameter("from", it) }
             to?.let { parameter("to", it) }
         }.body<ByteArray>()
+    }
+
+    // Recurring Transactions
+    suspend fun fetchRecurringTransactions(): Result<List<RecurringTransactionResponse>> = safeApiCall {
+        client.get("$transactionUrl/recurring-transactions") {
+            addAuthHeader()
+        }.body()
+    }
+
+    suspend fun createRecurringTransaction(request: CreateRecurringTransactionRequest): Result<RecurringTransactionResponse> = safeApiCall {
+        client.post("$transactionUrl/recurring-transactions") {
+            addAuthHeader()
+            setBody(request)
+        }.body()
+    }
+
+    suspend fun toggleRecurringTransaction(id: Int): Result<RecurringTransactionResponse> = safeApiCall {
+        client.post("$transactionUrl/recurring-transactions/$id/toggle") {
+            addAuthHeader()
+        }.body()
+    }
+
+    suspend fun executeRecurringTransaction(id: Int): Result<RecurringTransactionResponse> = safeApiCall {
+        client.post("$transactionUrl/recurring-transactions/$id/execute") {
+            addAuthHeader()
+        }.body()
+    }
+
+    suspend fun deleteRecurringTransaction(id: Int): Result<Unit> = safeApiCall {
+        client.delete("$transactionUrl/recurring-transactions/$id") {
+            addAuthHeader()
+        }
+    }
+
+    // Insights
+    suspend fun fetchTrends(months: Int = 6): Result<TrendsResponse> = safeApiCall {
+        client.get("$transactionUrl/analytics/insights/trends") {
+            addAuthHeader()
+            parameter("months", months)
+        }.body()
+    }
+
+    suspend fun fetchTopCategories(type: String = "expense", from: String? = null, to: String? = null): Result<TopCategoriesResponse> = safeApiCall {
+        client.get("$transactionUrl/analytics/insights/top-categories") {
+            addAuthHeader()
+            parameter("type", type)
+            from?.let { parameter("from", it) }
+            to?.let { parameter("to", it) }
+        }.body()
     }
 
     private suspend inline fun <T> safeApiCall(crossinline block: suspend () -> T): Result<T> {

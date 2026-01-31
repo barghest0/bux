@@ -20,6 +20,9 @@ import com.barghest.bux.ui.screens.analytics.NetWorthScreen
 import com.barghest.bux.ui.screens.budgets.AddBudgetScreen
 import com.barghest.bux.ui.screens.budgets.BudgetsScreen
 import com.barghest.bux.ui.screens.settings.ProfileEditScreen
+import com.barghest.bux.ui.screens.recurring.RecurringTransactionsScreen
+import com.barghest.bux.ui.screens.recurring.AddRecurringTransactionScreen
+import com.barghest.bux.ui.screens.insights.InsightsScreen
 import com.barghest.bux.ui.screens.settings.SettingsScreen
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
@@ -42,6 +45,9 @@ sealed class Screen(val route: String) {
     data object AddBudget : Screen("add_budget")
     data object Settings : Screen("settings")
     data object ProfileEdit : Screen("profile_edit")
+    data object RecurringTransactions : Screen("recurring_transactions")
+    data object AddRecurringTransaction : Screen("add_recurring_transaction")
+    data object Insights : Screen("insights")
 }
 
 @Composable
@@ -107,6 +113,15 @@ fun NavigationGraph(navController: NavHostController) {
         }
         composable(Screen.ProfileEdit.route) {
             ProfileEditScreen(navController)
+        }
+        composable(Screen.RecurringTransactions.route) {
+            RecurringTransactionsScreen(navController)
+        }
+        composable(Screen.AddRecurringTransaction.route) {
+            AddRecurringTransactionScreen(navController)
+        }
+        composable(Screen.Insights.route) {
+            InsightsScreen(navController)
         }
     }
 }

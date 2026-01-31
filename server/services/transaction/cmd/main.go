@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"time"
 	"transaction/internal/data/repository"
 	"transaction/internal/domain/service"
 	"transaction/internal/infra/db"
@@ -51,6 +52,10 @@ func main() {
 	budgetRepo := repository.NewBudgetRepository(postgres)
 	budgetService := service.NewBudgetService(budgetRepo)
 
+	// Recurring Transactions
+	recurringTxRepo := repository.NewRecurringTransactionRepository(postgres)
+	recurringTxService := service.NewRecurringTransactionService(recurringTxRepo, txRepo, accountRepo)
+
 	r := gin.Default()
 	http.New(r, txService)
 	http.NewAccountHTTP(r, accountService)
@@ -58,6 +63,20 @@ func main() {
 	http.NewAnalyticsHTTP(r, analyticsService)
 	http.NewBudgetHTTP(r, budgetService)
 	http.NewExportHTTP(r, txService)
+	http.NewRecurringTransactionHTTP(r, recurringTxService)
+
+	// Start recurring transaction scheduler
+	go func() {
+		ticker := time.NewTicker(1 * time.Hour)
+		defer ticker.Stop()
+		for range ticker.C {
+			if count, err := recurringTxService.ProcessDue(); err != nil {
+				log.Error("Error processing recurring transactions", sl.Err(err))
+			} else if count > 0 {
+				log.Info("Processed recurring transactions", slog.Int("count", count))
+			}
+		}
+	}()
 
 	if err := r.Run(fmt.Sprintf(":%d", cfg.HTTPServer.Port)); err != nil {
 		log.Error("Unable to start the server: ", sl.Err(err))
