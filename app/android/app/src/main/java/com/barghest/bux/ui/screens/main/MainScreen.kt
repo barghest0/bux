@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -31,6 +32,7 @@ import androidx.navigation.NavController
 import com.barghest.bux.domain.model.Account
 import com.barghest.bux.domain.model.Transaction
 import com.barghest.bux.domain.model.TransactionType
+import com.barghest.bux.ui.application.navigation.Screen
 import com.barghest.bux.ui.screens.accounts.formatMoney
 import com.barghest.bux.ui.screens.accounts.icon
 import org.koin.androidx.compose.koinViewModel
@@ -249,6 +251,30 @@ private fun MainContent(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Категории",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+                Card(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { navController.navigate(Screen.Analytics.route) }
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.BarChart,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Аналитика",
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
