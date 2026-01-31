@@ -17,8 +17,7 @@ import com.barghest.bux.domain.model.Security
 import com.barghest.bux.domain.model.Trade
 
 class InvestmentRepository(
-    private val api: Api,
-    private val userIdProvider: () -> Int
+    private val api: Api
 ) {
     // Brokers
     suspend fun getBrokers(): Result<List<Broker>> {
@@ -27,7 +26,6 @@ class InvestmentRepository(
 
     suspend fun createBroker(name: String): Result<Broker> {
         val request = CreateBrokerRequest(
-            userId = userIdProvider(),
             name = name
         )
         return api.createBroker(request).map { it.toDomain() }
@@ -52,7 +50,6 @@ class InvestmentRepository(
         baseCurrency: String = "RUB"
     ): Result<Portfolio> {
         val request = CreatePortfolioRequest(
-            userId = userIdProvider(),
             brokerId = brokerId,
             name = name,
             baseCurrency = baseCurrency

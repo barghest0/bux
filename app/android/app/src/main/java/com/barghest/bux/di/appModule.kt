@@ -1,6 +1,7 @@
 package com.barghest.bux.di
 
 import com.barghest.bux.data.local.BuxDatabase
+import com.barghest.bux.data.local.PreferencesManager
 import com.barghest.bux.data.local.TokenManager
 import com.barghest.bux.data.network.Api
 import com.barghest.bux.data.repository.AccountRepository
@@ -26,6 +27,7 @@ import com.barghest.bux.ui.screens.analytics.NetWorthViewModel
 import com.barghest.bux.ui.screens.budgets.AddBudgetViewModel
 import com.barghest.bux.ui.screens.budgets.BudgetsViewModel
 import com.barghest.bux.ui.screens.main.MainViewModel
+import com.barghest.bux.ui.screens.settings.ProfileEditViewModel
 import com.barghest.bux.ui.screens.transaction.add.AddTransactionViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -34,6 +36,7 @@ import org.koin.dsl.module
 val appModule = module {
     // Local storage
     single { TokenManager(androidContext()) }
+    single { PreferencesManager(androidContext()) }
     single { BuxDatabase.getDatabase(androidContext()) }
     single { get<BuxDatabase>().accountDao() }
     single { get<BuxDatabase>().transactionDao() }
@@ -50,7 +53,7 @@ val appModule = module {
     single { TransactionRepository(get(), get(), get()) }
     single { CategoryRepository(get(), get(), get()) }
     single { AuthRepository(get(), get()) }
-    single { InvestmentRepository(get(), get()) }
+    single { InvestmentRepository(get()) }
     single { AnalyticsRepository(get(), get(), get()) }
     single { BudgetRepository(get()) }
 
@@ -76,4 +79,5 @@ val appModule = module {
     viewModel { NetWorthViewModel(get()) }
     viewModel { BudgetsViewModel(get()) }
     viewModel { AddBudgetViewModel(get(), get()) }
+    viewModel { ProfileEditViewModel(get()) }
 }

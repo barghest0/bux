@@ -11,7 +11,8 @@ data class LoginRequest(
 @Serializable
 data class LoggedInUser(
     val id: Int,
-    val username: String
+    val username: String,
+    val email: String? = null
 )
 
 @Serializable

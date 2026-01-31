@@ -87,7 +87,6 @@ data class CreateTradeRequest(
 
 @Serializable
 data class CreatePortfolioRequest(
-    @SerialName("user_id") val userId: Int,
     @SerialName("broker_id") val brokerId: Int,
     val name: String,
     @SerialName("base_currency") val baseCurrency: String = "RUB"
@@ -95,6 +94,5 @@ data class CreatePortfolioRequest(
 
 @Serializable
 data class CreateBrokerRequest(
-    @SerialName("user_id") val userId: Int,
     val name: String
 )

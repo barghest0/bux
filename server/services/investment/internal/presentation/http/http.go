@@ -31,6 +31,7 @@ func New(r *gin.Engine, s *service.InvestmentService) {
 		api.GET("/portfolios/:id", h.GetPortfolio)
 		api.GET("/portfolios/:id/holdings", h.GetHoldings)
 		api.GET("/portfolios/:id/summary", h.GetPortfolioSummary)
+		api.GET("/portfolios/:id/value", h.GetPortfolioSummary)
 		api.GET("/portfolios/:id/trades", h.GetTrades)
 
 		// Securities
@@ -38,6 +39,7 @@ func New(r *gin.Engine, s *service.InvestmentService) {
 		api.GET("/securities", h.SearchSecurities)
 		api.GET("/securities/:id", h.GetSecurity)
 		api.GET("/securities/:id/price", h.GetLatestPrice)
+		api.GET("/securities/:id/history", h.GetPriceHistory)
 
 		// Trades
 		api.POST("/trades", h.ExecuteTrade)
@@ -54,7 +56,12 @@ func (h *InvestmentHandler) CreateBroker(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	b, err := h.service.CreateBroker(req.UserID, req.Name)
+	userID, ok := c.Get("userID")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	b, err := h.service.CreateBroker(userID.(uint), req.Name)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -63,8 +70,12 @@ func (h *InvestmentHandler) CreateBroker(c *gin.Context) {
 }
 
 func (h *InvestmentHandler) GetBrokers(c *gin.Context) {
-	userID := c.GetUint("user_id")
-	brokers, err := h.service.GetBrokers(userID)
+	userID, ok := c.Get("userID")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	brokers, err := h.service.GetBrokers(userID.(uint))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -79,7 +90,12 @@ func (h *InvestmentHandler) CreatePortfolio(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	p, err := h.service.CreatePortfolio(req.UserID, req.BrokerID, req.Name, req.BaseCurrency)
+	userID, ok := c.Get("userID")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	p, err := h.service.CreatePortfolio(userID.(uint), req.BrokerID, req.Name, req.BaseCurrency)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -88,8 +104,12 @@ func (h *InvestmentHandler) CreatePortfolio(c *gin.Context) {
 }
 
 func (h *InvestmentHandler) GetPortfolios(c *gin.Context) {
-	userID := c.GetUint("user_id")
-	portfolios, err := h.service.GetPortfolios(userID)
+	userID, ok := c.Get("userID")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	portfolios, err := h.service.GetPortfolios(userID.(uint))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -224,6 +244,55 @@ func (h *InvestmentHandler) GetLatestPrice(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, price)
+}
+
+func (h *InvestmentHandler) GetPriceHistory(c *gin.Context) {
+	var uri SecurityURI
+	if err := c.ShouldBindUri(&uri); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+
+	fromStr := c.Query("from")
+	toStr := c.Query("to")
+
+	var (
+		from time.Time
+		to   time.Time
+		err  error
+	)
+
+	if fromStr != "" {
+		from, err = time.Parse("2006-01-02", fromStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid 'from' date format, use YYYY-MM-DD"})
+			return
+		}
+	}
+
+	if toStr != "" {
+		to, err = time.Parse("2006-01-02", toStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid 'to' date format, use YYYY-MM-DD"})
+			return
+		}
+		// Include entire day
+		to = to.Add(24*time.Hour - time.Nanosecond)
+	} else {
+		to = time.Now()
+	}
+
+	if !from.IsZero() && to.Before(from) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "'to' must be after 'from'"})
+		return
+	}
+
+	prices, err := h.service.GetPriceHistory(uri.ID, from, to)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, prices)
 }
 
 // Trade handler

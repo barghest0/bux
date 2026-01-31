@@ -101,8 +101,8 @@ func (s *BudgetService) GetBudgetStatus(userID uint) ([]BudgetStatus, error) {
 
 	statuses := make([]BudgetStatus, len(rows))
 	for i, r := range rows {
-		budgetAmt := decimal.NewFromFloat(r.BudgetAmount)
-		spentAmt := decimal.NewFromFloat(r.SpentAmount)
+		budgetAmt := r.BudgetAmount
+		spentAmt := r.SpentAmount
 		remaining := budgetAmt.Sub(spentAmt)
 		var pct decimal.Decimal
 		if !budgetAmt.IsZero() {

@@ -16,6 +16,9 @@ import com.barghest.bux.data.dto.CreateTransactionRequest
 import com.barghest.bux.data.dto.TransactionSummaryResponse as SummaryResponse
 import com.barghest.bux.data.dto.LoginRequest
 import com.barghest.bux.data.dto.LoginResponse
+import com.barghest.bux.data.dto.UpdatePasswordRequest
+import com.barghest.bux.data.dto.UpdateProfileRequest
+import com.barghest.bux.data.dto.UserProfileResponse
 import com.barghest.bux.data.dto.PortfolioResponse
 import com.barghest.bux.data.dto.PortfolioSummaryResponse
 import com.barghest.bux.data.dto.SecurityResponse
@@ -68,6 +71,26 @@ class Api(private val tokenManager: TokenManager) {
         client.post("$userUrl/auth/login") {
             setBody(request)
         }.body()
+    }
+
+    suspend fun fetchProfile(): Result<UserProfileResponse> = safeApiCall {
+        client.get("$userUrl/users/me") {
+            addAuthHeader()
+        }.body()
+    }
+
+    suspend fun updateProfile(request: UpdateProfileRequest): Result<UserProfileResponse> = safeApiCall {
+        client.put("$userUrl/users/profile") {
+            addAuthHeader()
+            setBody(request)
+        }.body()
+    }
+
+    suspend fun updatePassword(request: UpdatePasswordRequest): Result<Unit> = safeApiCall {
+        client.put("$userUrl/users/password") {
+            addAuthHeader()
+            setBody(request)
+        }
     }
 
     // Accounts

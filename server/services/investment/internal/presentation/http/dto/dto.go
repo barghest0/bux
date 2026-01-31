@@ -3,12 +3,10 @@ package dto
 import "github.com/shopspring/decimal"
 
 type CreateBrokerRequest struct {
-	UserID uint   `json:"user_id" binding:"required"`
-	Name   string `json:"name" binding:"required"`
+	Name string `json:"name" binding:"required"`
 }
 
 type CreatePortfolioRequest struct {
-	UserID       uint   `json:"user_id" binding:"required"`
 	BrokerID     uint   `json:"broker_id" binding:"required"`
 	Name         string `json:"name" binding:"required"`
 	BaseCurrency string `json:"base_currency"`

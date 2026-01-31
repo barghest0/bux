@@ -4,6 +4,7 @@ import (
 	"time"
 	"transaction/internal/domain/model"
 
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
@@ -47,8 +48,8 @@ type BudgetStatusRow struct {
 	CategoryName  string
 	CategoryIcon  string
 	CategoryColor string
-	BudgetAmount  float64
-	SpentAmount   float64
+	BudgetAmount  decimal.Decimal
+	SpentAmount   decimal.Decimal
 	Period        string
 	Currency      string
 }

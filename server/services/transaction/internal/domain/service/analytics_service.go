@@ -57,7 +57,7 @@ func (s *AnalyticsService) GetSummary(userID uint, from, to time.Time) (*Transac
 	}
 
 	for _, r := range catRows {
-		total := decimal.NewFromFloat(r.Total)
+		total := r.Total
 		summary.ByCategory = append(summary.ByCategory, CategoryTotal{
 			CategoryID:    r.CategoryID,
 			CategoryName:  r.CategoryName,
@@ -79,8 +79,8 @@ func (s *AnalyticsService) GetSummary(userID uint, from, to time.Time) (*Transac
 		summary.ByMonth = append(summary.ByMonth, MonthlyTotal{
 			Year:    r.Year,
 			Month:   r.Month,
-			Income:  decimal.NewFromFloat(r.Income),
-			Expense: decimal.NewFromFloat(r.Expense),
+			Income:  r.Income,
+			Expense: r.Expense,
 		})
 	}
 

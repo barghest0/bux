@@ -4,6 +4,7 @@ import (
 	"time"
 	"transaction/internal/domain/model"
 
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
@@ -123,15 +124,15 @@ type CategoryTotalRow struct {
 	CategoryIcon  string
 	CategoryColor string
 	Type          string
-	Total         float64
+	Total         decimal.Decimal
 	Count         int64
 }
 
 type MonthlyTotalRow struct {
 	Year    int
 	Month   int
-	Income  float64
-	Expense float64
+	Income  decimal.Decimal
+	Expense decimal.Decimal
 }
 
 func (r *TransactionRepository) GetSummaryByCategory(userID uint, from, to time.Time) ([]CategoryTotalRow, error) {

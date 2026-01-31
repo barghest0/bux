@@ -30,6 +30,7 @@ import com.barghest.bux.domain.model.NetWorthData
 import com.barghest.bux.domain.model.Transaction
 import com.barghest.bux.domain.model.TransactionSummary
 import com.barghest.bux.domain.model.TransactionType
+import com.barghest.bux.ui.application.navigation.Screen
 import com.barghest.bux.ui.screens.accounts.formatMoney
 import com.barghest.bux.ui.screens.accounts.icon
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
@@ -65,6 +66,9 @@ fun AnalyticsDashboardScreen(
                 actions = {
                     IconButton(onClick = { viewModel.refresh() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Обновить")
+                    }
+                    IconButton(onClick = { navController.navigate(Screen.Settings.route) }) {
+                        Icon(Icons.Default.Settings, contentDescription = "Настройки")
                     }
                 }
             )
