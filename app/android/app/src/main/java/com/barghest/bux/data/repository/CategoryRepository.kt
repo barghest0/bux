@@ -3,6 +3,9 @@ package com.barghest.bux.data.repository
 import com.barghest.bux.data.dto.CreateCategoryRequest
 import com.barghest.bux.data.dto.UpdateCategoryRequest
 import com.barghest.bux.data.local.dao.CategoryDao
+import com.barghest.bux.data.local.dao.PendingOperationDao
+import com.barghest.bux.data.local.entity.CategoryEntity
+import com.barghest.bux.data.local.entity.PendingOperationEntity
 import com.barghest.bux.data.mapper.toCategoryDomainList
 import com.barghest.bux.data.mapper.toDomain
 import com.barghest.bux.data.mapper.toEntity
@@ -11,10 +14,13 @@ import com.barghest.bux.domain.model.Category
 import com.barghest.bux.domain.model.CategoryType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class CategoryRepository(
     private val api: Api,
     private val categoryDao: CategoryDao,
+    private val pendingOps: PendingOperationDao,
     private val userIdProvider: () -> Int
 ) {
     fun getCategoriesFlow(): Flow<List<Category>> {
@@ -24,15 +30,6 @@ class CategoryRepository(
     fun getCategoriesByTypeFlow(type: CategoryType): Flow<List<Category>> {
         return categoryDao.getCategoriesByUserAndType(userIdProvider(), type.value)
             .map { it.toCategoryDomainList() }
-    }
-
-    suspend fun refreshCategories(): Result<List<Category>> {
-        return api.fetchCategories().map { categories ->
-            val userId = userIdProvider()
-            val entities = categories.map { it.toEntity(userId) }
-            categoryDao.insertAll(entities)
-            categories.map { it.toDomain() }
-        }
     }
 
     suspend fun getCategory(id: Int): Category? {
@@ -45,17 +42,31 @@ class CategoryRepository(
         icon: String,
         color: String
     ): Result<Category> {
-        val request = CreateCategoryRequest(
+        val userId = userIdProvider()
+        val tempId = -(System.currentTimeMillis() % Int.MAX_VALUE).toInt()
+        val entity = CategoryEntity(
+            id = tempId,
+            userId = userId,
             name = name,
             type = type.value,
             icon = icon,
-            color = color
+            color = color,
+            isSystem = false,
+            sortOrder = 0
         )
-        return api.createCategory(request).map { response ->
-            val userId = userIdProvider()
-            categoryDao.insert(response.toEntity(userId))
-            response.toDomain()
-        }
+        categoryDao.insert(entity)
+
+        val request = CreateCategoryRequest(name = name, type = type.value, icon = icon, color = color)
+        pendingOps.insert(
+            PendingOperationEntity(
+                entityType = "category",
+                entityId = tempId,
+                operationType = "create",
+                payload = Json.encodeToString(request)
+            )
+        )
+
+        return Result.success(entity.toDomain())
     }
 
     suspend fun updateCategory(
@@ -65,26 +76,51 @@ class CategoryRepository(
         color: String? = null,
         sortOrder: Int? = null
     ): Result<Category> {
-        val request = UpdateCategoryRequest(
-            name = name,
-            icon = icon,
-            color = color,
-            sortOrder = sortOrder
+        val existing = categoryDao.getById(id) ?: return Result.failure(Exception("Not found"))
+        val updated = existing.copy(
+            name = name ?: existing.name,
+            icon = icon ?: existing.icon,
+            color = color ?: existing.color,
+            sortOrder = sortOrder ?: existing.sortOrder
         )
-        return api.updateCategory(id, request).map { response ->
-            val userId = userIdProvider()
-            categoryDao.insert(response.toEntity(userId))
-            response.toDomain()
-        }
+        categoryDao.insert(updated)
+
+        val request = UpdateCategoryRequest(name = name, icon = icon, color = color, sortOrder = sortOrder)
+        pendingOps.insert(
+            PendingOperationEntity(
+                entityType = "category",
+                entityId = id,
+                operationType = "update",
+                payload = Json.encodeToString(request)
+            )
+        )
+
+        return Result.success(updated.toDomain())
     }
 
     suspend fun deleteCategory(id: Int): Result<Unit> {
-        return api.deleteCategory(id).also {
-            if (it.isSuccess) {
-                categoryDao.getById(id)?.let { entity ->
-                    categoryDao.delete(entity)
-                }
-            }
+        categoryDao.getById(id)?.let { categoryDao.delete(it) }
+
+        pendingOps.insert(
+            PendingOperationEntity(
+                entityType = "category",
+                entityId = id,
+                operationType = "delete",
+                payload = ""
+            )
+        )
+
+        return Result.success(Unit)
+    }
+
+    // Called by SyncManager only
+    suspend fun refreshCategories(): Result<List<Category>> {
+        return api.fetchCategories().map { categories ->
+            val userId = userIdProvider()
+            val entities = categories.map { it.toEntity(userId) }
+            categoryDao.deleteAllByUser(userId)
+            categoryDao.insertAll(entities)
+            categories.map { it.toDomain() }
         }
     }
 }

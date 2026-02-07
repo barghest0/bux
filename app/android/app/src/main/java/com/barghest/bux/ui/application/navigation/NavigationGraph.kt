@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import com.barghest.bux.ui.screens.accounts.AccountsScreen
 import com.barghest.bux.ui.screens.accounts.AddAccountScreen
 import com.barghest.bux.ui.screens.auth.LoginScreen
+import com.barghest.bux.ui.screens.home.HomeScreen
 import com.barghest.bux.ui.screens.main.MainScreen
 import com.barghest.bux.ui.screens.transaction.add.AddTransactionScreen
 import com.barghest.bux.ui.screens.categories.CategoriesScreen
@@ -28,6 +29,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 
 sealed class Screen(val route: String) {
+    data object Home : Screen("home")
     data object Main : Screen("main")
     data object AddTransaction : Screen("add_transaction")
     data object Login : Screen("login")
@@ -55,6 +57,9 @@ fun NavigationGraph(navController: NavHostController) {
     NavHost(navController = navController, startDestination = Screen.Login.route) {
         composable(Screen.Login.route) {
             LoginScreen(navController)
+        }
+        composable(Screen.Home.route) {
+            HomeScreen(navController)
         }
         composable(Screen.Analytics.route) {
             AnalyticsDashboardScreen(navController)

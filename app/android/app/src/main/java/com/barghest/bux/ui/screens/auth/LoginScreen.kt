@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,7 +35,7 @@ fun LoginScreen(
     // Navigate to main screen when logged in
     LaunchedEffect(state.isLoggedIn) {
         if (state.isLoggedIn) {
-            navController.navigate(Screen.Main.route) {
+            navController.navigate(Screen.Home.route) {
                 popUpTo(Screen.Login.route) { inclusive = true }
             }
         }
@@ -92,6 +93,16 @@ fun LoginScreen(
                 } else {
                     Text("Войти")
                 }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            OutlinedButton(
+                onClick = { viewModel.loginOffline() },
+                enabled = !state.loading,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Оффлайн")
             }
 
             if (state.error != null) {

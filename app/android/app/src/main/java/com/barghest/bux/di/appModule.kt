@@ -29,6 +29,7 @@ import com.barghest.bux.ui.screens.analytics.AnalyticsDashboardViewModel
 import com.barghest.bux.ui.screens.analytics.NetWorthViewModel
 import com.barghest.bux.ui.screens.budgets.AddBudgetViewModel
 import com.barghest.bux.ui.screens.budgets.BudgetsViewModel
+import com.barghest.bux.ui.screens.home.HomeViewModel
 import com.barghest.bux.ui.screens.main.MainViewModel
 import com.barghest.bux.ui.screens.recurring.RecurringTransactionsViewModel
 import com.barghest.bux.ui.screens.insights.InsightsViewModel
@@ -49,6 +50,12 @@ val appModule = module {
     single { get<BuxDatabase>().transactionDao() }
     single { get<BuxDatabase>().categoryDao() }
     single { get<BuxDatabase>().recurringTransactionDao() }
+    single { get<BuxDatabase>().budgetDao() }
+    single { get<BuxDatabase>().portfolioDao() }
+    single { get<BuxDatabase>().tradeDao() }
+    single { get<BuxDatabase>().securityDao() }
+    single { get<BuxDatabase>().brokerDao() }
+    single { get<BuxDatabase>().pendingOperationDao() }
 
     // Network
     single { Api(get()) }
@@ -57,25 +64,26 @@ val appModule = module {
     single<() -> Int> { { 1 } }
 
     // Repositories
-    single { AccountRepository(get(), get(), get()) }
-    single { TransactionRepository(get(), get(), get()) }
-    single { CategoryRepository(get(), get(), get()) }
+    single { AccountRepository(get(), get(), get(), get()) }
+    single { TransactionRepository(get(), get(), get(), get()) }
+    single { CategoryRepository(get(), get(), get(), get()) }
     single { AuthRepository(get(), get()) }
-    single { InvestmentRepository(get()) }
-    single { AnalyticsRepository(get(), get(), get()) }
-    single { BudgetRepository(get()) }
-    single { RecurringTransactionRepository(get(), get(), get()) }
+    single { InvestmentRepository(get(), get(), get(), get(), get(), get(), get()) }
+    single { AnalyticsRepository(get(), get(), get(), get(), get()) }
+    single { BudgetRepository(get(), get(), get(), get()) }
+    single { RecurringTransactionRepository(get(), get(), get(), get()) }
 
     // Sync
-    single { SyncManager(get(), get(), get()) }
+    single { SyncManager(get(), get(), get(), get(), get(), get(), get(), get()) }
 
     // Services
     single { TransactionService(get()) }
     single { AuthService(get()) }
 
     // ViewModels
+    viewModel { HomeViewModel(get(), get(), get(), get(), get()) }
     viewModel { MainViewModel(get(), get(), get()) }
-    viewModel { LoginViewModel(get(), get()) }
+    viewModel { LoginViewModel(get(), get(), get()) }
     viewModel { AddTransactionViewModel(get(), get(), get()) }
     viewModel { AccountsViewModel(get()) }
     viewModel { AddAccountViewModel(get()) }

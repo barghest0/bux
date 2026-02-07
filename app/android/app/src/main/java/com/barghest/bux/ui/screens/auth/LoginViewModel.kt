@@ -5,20 +5,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.barghest.bux.data.local.PreferencesManager
 import com.barghest.bux.data.local.TokenManager
 import com.barghest.bux.domain.service.AuthService
 import kotlinx.coroutines.launch
 
 class LoginViewModel(
     private val authService: AuthService,
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val preferencesManager: PreferencesManager
 ) : ViewModel() {
 
     var uiState by mutableStateOf(LoginUiState())
         private set
 
     init {
-        // Check if already logged in
         if (tokenManager.isLoggedIn()) {
             uiState = uiState.copy(isLoggedIn = true)
         }
@@ -28,12 +29,11 @@ class LoginViewModel(
         viewModelScope.launch {
             uiState = uiState.copy(loading = true, error = null)
 
+            preferencesManager.setOfflineMode(false)
+
             authService.login(uiState.username, uiState.password)
-                .onSuccess { user ->
-                    uiState = uiState.copy(
-                        loading = false,
-                        isLoggedIn = true
-                    )
+                .onSuccess {
+                    uiState = uiState.copy(loading = false, isLoggedIn = true)
                 }
                 .onFailure { e ->
                     uiState = uiState.copy(
@@ -42,6 +42,11 @@ class LoginViewModel(
                     )
                 }
         }
+    }
+
+    fun loginOffline() {
+        preferencesManager.setOfflineMode(true)
+        uiState = uiState.copy(isLoggedIn = true)
     }
 
     fun updateUsername(value: String) {
