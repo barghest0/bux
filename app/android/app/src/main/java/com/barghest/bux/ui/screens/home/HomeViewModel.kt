@@ -7,6 +7,8 @@ import com.barghest.bux.data.repository.AccountRepository
 import com.barghest.bux.data.repository.AnalyticsRepository
 import com.barghest.bux.data.repository.InvestmentRepository
 import com.barghest.bux.domain.model.Account
+import com.barghest.bux.domain.model.AccountType
+import com.barghest.bux.domain.model.AssetGroup
 import com.barghest.bux.domain.model.NetWorthData
 import com.barghest.bux.domain.model.Portfolio
 import com.barghest.bux.domain.model.PortfolioSummary
@@ -18,6 +20,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
@@ -62,7 +65,7 @@ class HomeViewModel(
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     init {
-        loadData()
+        loadInitialThenObserve()
     }
 
     fun refresh() {
@@ -71,63 +74,115 @@ class HomeViewModel(
             try {
                 accountRepository.refreshAccounts()
                 transactionService.refreshTransactions()
-                loadDataInternal()
+                loadOneShotData()
             } finally {
                 _isRefreshing.value = false
             }
         }
     }
 
-    private fun loadData() {
+    // Cached one-shot data that doesn't come from Room flows
+    private var oneShotReady = false
+    private var cachedInvestmentValue: BigDecimal = BigDecimal.ZERO
+    private var cachedInvestmentCurrency: String = "RUB"
+    private var cachedSummary: TransactionSummary? = null
+    private var cachedPortfolioSummaries: List<PortfolioWithSummary> = emptyList()
+    private var cachedInsight: InsightMessage? = null
+    private var cachedNetWorthChange: BigDecimal? = null
+
+    private fun loadInitialThenObserve() {
         viewModelScope.launch {
-            _state.value = HomeState.Loading
-            loadDataInternal()
+            // First load one-shot data, then start observing flows
+            loadOneShotData()
+            // Now cachedNetWorth is set, start continuous observation
+            combine(
+                accountRepository.getAccountsFlow(),
+                transactionService.getTransactionsFlow()
+            ) { accounts, transactions ->
+                Pair(accounts, transactions)
+            }.collect { (accounts, transactions) ->
+                rebuildState(accounts, transactions)
+            }
         }
     }
 
-    private suspend fun loadDataInternal() {
+    private suspend fun loadOneShotData() {
         try {
-            val netWorthDeferred = viewModelScope.async { analyticsRepository.getNetWorth() }
             val summaryDeferred = viewModelScope.async { analyticsRepository.getTransactionSummary() }
-            val portfoliosDeferred = viewModelScope.async { investmentRepository.getPortfolios() }
             val trendsDeferred = viewModelScope.async { api.fetchTrends(2) }
 
-            val transactions = transactionService.getTransactionsFlow().first()
-            val accounts = accountRepository.getAccountsFlow().first()
-
-            val netWorth = netWorthDeferred.await().getOrElse {
-                _state.value = HomeState.Error(it.message ?: "Failed to load")
-                return
-            }
-
             val summary = summaryDeferred.await().getOrNull()
-            val portfolios = portfoliosDeferred.await().getOrDefault(emptyList())
+            val trends = trendsDeferred.await().getOrNull()?.trends
 
-            // Load portfolio summaries
+            val portfolios = investmentRepository.getPortfoliosFlow().first()
             val portfolioWithSummaries = portfolios.map { portfolio ->
                 val s = investmentRepository.getPortfolioSummary(portfolio.id).getOrNull()
                 PortfolioWithSummary(portfolio, s)
             }
 
-            // Compute net worth change from trends
-            val trends = trendsDeferred.await().getOrNull()?.trends
-            val netWorthChange = computeNetWorthChange(summary)
-
-            // Generate insight from trends
-            val insight = generateInsight(trends, summary)
-
-            _state.value = HomeState.Success(
-                netWorth = netWorth,
-                netWorthChange = netWorthChange,
-                accounts = accounts,
-                portfolios = portfolioWithSummaries,
-                summary = summary,
-                recentTransactions = transactions.take(5),
-                insight = insight
-            )
+            cachedInvestmentValue = portfolioWithSummaries
+                .mapNotNull { it.summary?.totalMarketValue }
+                .fold(BigDecimal.ZERO) { sum, v -> sum.add(v) }
+            cachedInvestmentCurrency = portfolios.firstOrNull()?.baseCurrency ?: "RUB"
+            cachedSummary = summary
+            cachedPortfolioSummaries = portfolioWithSummaries
+            cachedNetWorthChange = computeNetWorthChange(summary)
+            cachedInsight = generateInsight(trends, summary)
+            oneShotReady = true
         } catch (e: Exception) {
-            _state.value = HomeState.Error(e.message ?: "Unknown error")
+            if (_state.value is HomeState.Loading) {
+                _state.value = HomeState.Error(e.message ?: "Unknown error")
+            }
         }
+    }
+
+    private fun rebuildState(accounts: List<Account>, transactions: List<Transaction>) {
+        if (!oneShotReady) return
+
+        // Compute net worth reactively from live account data
+        val activeAccounts = accounts.filter { it.isActive }
+        val totalByCurrency = activeAccounts
+            .groupBy { it.currency }
+            .mapValues { (_, accs) -> accs.fold(BigDecimal.ZERO) { sum, a -> sum.add(a.balance) } }
+
+        val assetGroups = activeAccounts
+            .groupBy { it.type }
+            .map { (type, accs) ->
+                AssetGroup(
+                    type = type,
+                    label = accountTypeLabel(type),
+                    totalBalance = accs.fold(BigDecimal.ZERO) { sum, a -> sum.add(a.balance) },
+                    currency = accs.first().currency,
+                    accounts = accs
+                )
+            }
+            .sortedByDescending { it.totalBalance }
+
+        val netWorth = NetWorthData(
+            totalByCurrency = totalByCurrency,
+            assetGroups = assetGroups,
+            investmentValue = cachedInvestmentValue,
+            investmentCurrency = cachedInvestmentCurrency
+        )
+
+        _state.value = HomeState.Success(
+            netWorth = netWorth,
+            netWorthChange = cachedNetWorthChange,
+            accounts = accounts,
+            portfolios = cachedPortfolioSummaries,
+            summary = cachedSummary,
+            recentTransactions = transactions.take(5),
+            insight = cachedInsight
+        )
+    }
+
+    private fun accountTypeLabel(type: AccountType): String = when (type) {
+        AccountType.BANK_ACCOUNT -> "Банковские счета"
+        AccountType.CARD -> "Карты"
+        AccountType.CASH -> "Наличные"
+        AccountType.CRYPTO -> "Криптовалюта"
+        AccountType.INVESTMENT -> "Инвестиции"
+        AccountType.PROPERTY -> "Недвижимость"
     }
 
     private fun computeNetWorthChange(summary: TransactionSummary?): BigDecimal? {

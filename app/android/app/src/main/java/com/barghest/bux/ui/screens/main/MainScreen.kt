@@ -36,6 +36,7 @@ import com.barghest.bux.domain.model.Account
 import com.barghest.bux.domain.model.Category
 import com.barghest.bux.domain.model.Transaction
 import com.barghest.bux.domain.model.TransactionType
+import com.barghest.bux.ui.application.navigation.FloatingTabsBottomContentPadding
 import com.barghest.bux.ui.application.navigation.Screen
 import com.barghest.bux.ui.screens.accounts.formatMoney
 import com.barghest.bux.ui.screens.accounts.icon
@@ -107,6 +108,7 @@ fun MainScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { navController.navigate("add_transaction") },
+                modifier = Modifier.padding(bottom = FloatingTabsBottomContentPadding),
                 elevation = FloatingActionButtonDefaults.elevation(1.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Добавить транзакцию")
@@ -203,7 +205,10 @@ private fun MainContent(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = 16.dp)
+        contentPadding = PaddingValues(
+            top = 16.dp,
+            bottom = 16.dp + FloatingTabsBottomContentPadding
+        )
     ) {
         item {
             Column(

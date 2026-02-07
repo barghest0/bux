@@ -33,6 +33,8 @@ import com.barghest.bux.data.local.TokenManager
 import com.barghest.bux.domain.model.ThemeMode
 import com.barghest.bux.domain.service.BiometricHelper
 import com.barghest.bux.ui.application.navigation.NavigationGraph
+import com.barghest.bux.ui.application.navigation.Screen
+import com.barghest.bux.ui.application.network.isInternetAvailable
 import com.barghest.bux.ui.shared.theme.BuxTheme
 import org.koin.androidx.compose.get
 
@@ -46,6 +48,8 @@ class MainActivity : FragmentActivity() {
             val biometricHelper: BiometricHelper = get()
             val themeMode by preferencesManager.themeMode.collectAsState()
             val biometricEnabled by preferencesManager.biometricEnabled.collectAsState()
+            val offlineMode by preferencesManager.offlineMode.collectAsState()
+            val hasInternet = remember { this@MainActivity.isInternetAvailable() }
             val darkTheme = when (themeMode) {
                 ThemeMode.DARK -> true
                 ThemeMode.LIGHT -> false
@@ -62,6 +66,12 @@ class MainActivity : FragmentActivity() {
                         onSuccess = { biometricPassed = true },
                         onError = { /* stay locked */ }
                     )
+                }
+            }
+
+            LaunchedEffect(hasInternet) {
+                if (!hasInternet) {
+                    preferencesManager.setOfflineMode(true)
                 }
             }
 
@@ -95,7 +105,16 @@ class MainActivity : FragmentActivity() {
                         }
                     } else {
                         val navController = rememberNavController()
-                        NavigationGraph(navController)
+                        val startDestination = when {
+                            !hasInternet -> Screen.Home.route
+                            tokenManager.isLoggedIn() -> Screen.Home.route
+                            offlineMode -> Screen.Home.route
+                            else -> Screen.Login.route
+                        }
+                        NavigationGraph(
+                            navController = navController,
+                            startDestination = startDestination
+                        )
                     }
                 }
             }

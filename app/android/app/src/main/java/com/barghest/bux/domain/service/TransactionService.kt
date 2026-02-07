@@ -20,6 +20,10 @@ class TransactionService(
         return repository.refreshTransactions()
     }
 
+    suspend fun refreshTransactionsByAccount(accountId: Int): Result<List<Transaction>> {
+        return repository.refreshTransactionsByAccount(accountId)
+    }
+
     suspend fun createTransaction(transaction: NewTransaction): Result<Transaction> {
         return repository.createTransaction(transaction)
     }

@@ -1,5 +1,6 @@
 package com.barghest.bux.data.repository
 
+import com.barghest.bux.data.local.dao.AccountDao
 import com.barghest.bux.data.local.dao.PendingOperationDao
 import com.barghest.bux.data.local.dao.TransactionDao
 import com.barghest.bux.data.local.entity.PendingOperationEntity
@@ -23,6 +24,7 @@ import java.time.Instant
 class TransactionRepository(
     private val api: Api,
     private val transactionDao: TransactionDao,
+    private val accountDao: AccountDao,
     private val pendingOps: PendingOperationDao,
     private val userIdProvider: () -> Int
 ) {
@@ -53,6 +55,26 @@ class TransactionRepository(
             transactionDate = transaction.transactionDate.toEpochMilli()
         )
         transactionDao.insert(entity)
+
+        // Update account balance locally
+        accountDao.getById(transaction.accountId)?.let { account ->
+            val currentBalance = account.balance.toBigDecimalOrNull() ?: BigDecimal.ZERO
+            val newBalance = when (transaction.type) {
+                TransactionType.INCOME -> currentBalance.add(transaction.amount)
+                TransactionType.EXPENSE -> currentBalance.subtract(transaction.amount)
+                TransactionType.TRANSFER -> currentBalance.subtract(transaction.amount)
+            }
+            accountDao.insert(account.copy(balance = newBalance.toPlainString()))
+        }
+
+        // For transfers, credit the destination account
+        if (transaction.type == TransactionType.TRANSFER && transaction.destinationAccountId != null) {
+            accountDao.getById(transaction.destinationAccountId)?.let { destAccount ->
+                val destBalance = destAccount.balance.toBigDecimalOrNull() ?: BigDecimal.ZERO
+                val newDestBalance = destBalance.add(transaction.amount)
+                accountDao.insert(destAccount.copy(balance = newDestBalance.toPlainString()))
+            }
+        }
 
         val request = transaction.toRequest()
         pendingOps.insert(

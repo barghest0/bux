@@ -23,11 +23,18 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun AddTransactionScreen(
     navController: NavController,
+    initialType: String? = null,
     viewModel: AddTransactionViewModel = koinViewModel()
 ) {
     val accounts by viewModel.accounts.collectAsState()
     val categories by viewModel.categories.collectAsState()
     val state = viewModel.uiState
+    LaunchedEffect(initialType) {
+        val type = initialType
+            ?.let { value -> TransactionType.entries.find { it.value == value } }
+            ?: return@LaunchedEffect
+        viewModel.updateType(type)
+    }
 
     Scaffold(
         topBar = {

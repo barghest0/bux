@@ -35,6 +35,13 @@ class PreferencesManager(context: Context) {
         _offlineMode.value = enabled
     }
 
+    fun clearAll() {
+        prefs.edit().clear().apply()
+        _themeMode.value = ThemeMode.SYSTEM
+        _biometricEnabled.value = false
+        _offlineMode.value = false
+    }
+
     private fun loadThemeMode(): ThemeMode {
         val value = prefs.getString(KEY_THEME_MODE, ThemeMode.SYSTEM.value)
             ?: ThemeMode.SYSTEM.value

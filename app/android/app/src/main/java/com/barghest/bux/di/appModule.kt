@@ -17,6 +17,7 @@ import com.barghest.bux.domain.service.AuthService
 import com.barghest.bux.domain.service.BiometricHelper
 import com.barghest.bux.domain.service.TransactionService
 import com.barghest.bux.ui.screens.accounts.AccountsViewModel
+import com.barghest.bux.ui.screens.accounts.AccountDetailViewModel
 import com.barghest.bux.ui.screens.accounts.AddAccountViewModel
 import com.barghest.bux.ui.screens.auth.LoginViewModel
 import com.barghest.bux.ui.screens.categories.AddCategoryViewModel
@@ -65,7 +66,7 @@ val appModule = module {
 
     // Repositories
     single { AccountRepository(get(), get(), get(), get()) }
-    single { TransactionRepository(get(), get(), get(), get()) }
+    single { TransactionRepository(get(), get(), get(), get(), get()) }
     single { CategoryRepository(get(), get(), get(), get()) }
     single { AuthRepository(get(), get()) }
     single { InvestmentRepository(get(), get(), get(), get(), get(), get(), get()) }
@@ -86,6 +87,7 @@ val appModule = module {
     viewModel { LoginViewModel(get(), get(), get()) }
     viewModel { AddTransactionViewModel(get(), get(), get()) }
     viewModel { AccountsViewModel(get()) }
+    viewModel { AccountDetailViewModel(get(), get(), get()) }
     viewModel { AddAccountViewModel(get()) }
     viewModel { CategoriesViewModel(get()) }
     viewModel { AddCategoryViewModel(get()) }

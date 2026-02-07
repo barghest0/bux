@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.barghest.bux.domain.model.Portfolio
+import com.barghest.bux.ui.application.navigation.FloatingTabsBottomContentPadding
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,7 +55,10 @@ fun PortfoliosScreen(
             TopAppBar(title = { Text("Портфели") })
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { navController.navigate("add_portfolio") }) {
+            FloatingActionButton(
+                onClick = { navController.navigate("add_portfolio") },
+                modifier = Modifier.padding(bottom = FloatingTabsBottomContentPadding)
+            ) {
                 Icon(Icons.Default.Add, contentDescription = "Добавить портфель")
             }
         }
@@ -133,6 +137,9 @@ fun PortfoliosList(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+            bottom = FloatingTabsBottomContentPadding + 12.dp
+        ),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(portfolios) { portfolio ->

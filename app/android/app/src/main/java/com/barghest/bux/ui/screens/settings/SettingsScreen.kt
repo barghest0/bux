@@ -15,8 +15,10 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -28,14 +30,24 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.barghest.bux.data.local.BuxDatabase
 import com.barghest.bux.data.local.PreferencesManager
+import com.barghest.bux.data.local.TokenManager
 import com.barghest.bux.data.repository.AuthRepository
 import com.barghest.bux.domain.service.BiometricHelper
 import com.barghest.bux.domain.model.ThemeMode
 import com.barghest.bux.ui.application.navigation.Screen
+import com.barghest.bux.ui.application.network.isInternetAvailable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.get
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
@@ -46,8 +58,13 @@ fun SettingsScreen(
     val preferencesManager: PreferencesManager = get()
     val authRepository: AuthRepository = get()
     val biometricHelper: BiometricHelper = get()
+    val tokenManager: TokenManager = get()
+    val database: BuxDatabase = get()
     val themeMode by preferencesManager.themeMode.collectAsState()
     val biometricEnabled by preferencesManager.biometricEnabled.collectAsState()
+    val showResetDialog = remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -134,7 +151,15 @@ fun SettingsScreen(
             Button(
                 onClick = {
                     authRepository.logout()
-                    navController.navigate(Screen.Login.route) {
+                    val hasInternet = context.isInternetAvailable()
+                    if (!hasInternet) {
+                        preferencesManager.setOfflineMode(true)
+                    } else {
+                        preferencesManager.setOfflineMode(false)
+                    }
+                    navController.navigate(
+                        if (hasInternet) Screen.Login.route else Screen.Home.route
+                    ) {
                         popUpTo(navController.graph.startDestinationId) {
                             inclusive = true
                         }
@@ -147,7 +172,63 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(text = "Выйти")
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Button(
+                onClick = { showResetDialog.value = true },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError
+                ),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Text(text = "Сбросить локальные данные")
+            }
         }
+    }
+
+    if (showResetDialog.value) {
+        AlertDialog(
+            onDismissRequest = { showResetDialog.value = false },
+            title = { Text("Сброс локальных данных") },
+            text = {
+                Text("Все локальные данные будут удалены. Продолжить?")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showResetDialog.value = false
+                        scope.launch {
+                            withContext(Dispatchers.IO) {
+                                database.clearAllTables()
+                            }
+                            preferencesManager.clearAll()
+                            tokenManager.clearAll()
+                            val hasInternet = context.isInternetAvailable()
+                            if (!hasInternet) {
+                                preferencesManager.setOfflineMode(true)
+                            }
+                            navController.navigate(
+                                if (hasInternet) Screen.Login.route else Screen.Home.route
+                            ) {
+                                popUpTo(navController.graph.startDestinationId) {
+                                    inclusive = true
+                                }
+                                launchSingleTop = true
+                            }
+                        }
+                    }
+                ) {
+                    Text("Сбросить")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showResetDialog.value = false }) {
+                    Text("Отмена")
+                }
+            }
+        )
     }
 }
 

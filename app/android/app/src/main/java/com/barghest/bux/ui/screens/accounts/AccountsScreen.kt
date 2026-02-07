@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -46,6 +47,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.barghest.bux.domain.model.Account
 import com.barghest.bux.domain.model.AccountType
+import com.barghest.bux.ui.application.navigation.FloatingTabsBottomContentPadding
+import com.barghest.bux.ui.application.navigation.Screen
 import org.koin.androidx.compose.koinViewModel
 import java.text.NumberFormat
 import java.util.Currency
@@ -65,7 +68,10 @@ fun AccountsScreen(
             TopAppBar(title = { Text("Счета") })
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { navController.navigate("add_account") }) {
+            FloatingActionButton(
+                onClick = { navController.navigate(Screen.AddAccount.route) },
+                modifier = Modifier.padding(bottom = FloatingTabsBottomContentPadding)
+            ) {
                 Icon(Icons.Default.Add, contentDescription = "Добавить счет")
             }
         }
@@ -82,18 +88,17 @@ fun AccountsScreen(
                     )
                 }
                 is AccountsState.Empty -> {
-                    Column(
-                        modifier = Modifier.align(Alignment.Center),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    PullToRefreshBox(
+                        isRefreshing = isRefreshing,
+                        onRefresh = { viewModel.refresh() },
+                        modifier = Modifier.fillMaxSize()
                     ) {
-                        Text(
-                            text = "Нет счетов",
-                            style = MaterialTheme.typography.bodyLarge
+                        AccountsAllContent(
+                            accounts = emptyList(),
+                            onAccountClick = { account ->
+                                navController.navigate(Screen.AccountDetail.createRoute(account.id))
+                            }
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { navController.navigate("add_account") }) {
-                            Text("Добавить первый счет")
-                        }
                     }
                 }
                 is AccountsState.Error -> {
@@ -117,10 +122,10 @@ fun AccountsScreen(
                         onRefresh = { viewModel.refresh() },
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        AccountsList(
+                        AccountsAllContent(
                             accounts = currentState.accounts,
                             onAccountClick = { account ->
-                                navController.navigate("account_detail/${account.id}")
+                                navController.navigate(Screen.AccountDetail.createRoute(account.id))
                             }
                         )
                     }
@@ -131,12 +136,40 @@ fun AccountsScreen(
 }
 
 @Composable
-fun AccountsList(
+private fun AccountsAllContent(
     accounts: List<Account>,
     onAccountClick: (Account) -> Unit
 ) {
+    if (accounts.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            Text(
+                text = "Счетов пока нет",
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
+    } else {
+        AccountsList(
+            accounts = accounts,
+            onAccountClick = onAccountClick,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+}
+
+@Composable
+fun AccountsList(
+    accounts: List<Account>,
+    onAccountClick: (Account) -> Unit,
+    modifier: Modifier = Modifier
+) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier,
+        contentPadding = PaddingValues(bottom = FloatingTabsBottomContentPadding + 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(accounts) { account ->
